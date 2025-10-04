@@ -1,73 +1,41 @@
-# Welcome to your Lovable project
+ey-datafusion Monorepo
 
-## Project info
+Structure:
 
-**URL**: https://lovable.dev/projects/a6b9bad3-7c9b-4e13-91fa-9b2be09a9745
+- backend: FastAPI service (Python 3.11)
+- frontend: React + Vite TypeScript UI
 
-## How can I edit this code?
+Quickstart (Backend):
 
-There are several ways of editing your application.
+1. Copy `.env.example` to `.env` and set values
+2. Build and run: `docker compose up --build`
+3. Local dev: `uvicorn app.main:app --reload` from `backend/`
+4. Health check: `GET http://localhost:8000/healthz` → {"service":"ey-datafusion","version":"0.1.0"}
 
-**Use Lovable**
+Environment variables:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a6b9bad3-7c9b-4e13-91fa-9b2be09a9745) and start prompting.
+- API_KEY, DB_DSN, S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY
+- EMBEDDINGS_ENABLED=true|false
+- MATCH_AUTO_THRESHOLD=0.70
+- SAMPLE_N=2000
 
-Changes made via Lovable will be committed automatically to this repo.
+API base path is `/api/v1`. Health is also available at `/healthz`.
 
-**Use your preferred IDE**
+Development (Frontend):
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- cd `frontend` → `npm install` → `npm run dev`
+- Set `VITE_API_BASE` in `frontend/.env` if backend runs on a different host
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Endpoints (stubs, to be implemented incrementally):
 
-Follow these steps:
+- GET `/healthz`
+- POST `/api/v1/profile`, `/api/v1/match`, `/api/v1/merge`, `/api/v1/validate`, `/api/v1/docs`
+- POST `/api/v1/drift/check`, `/api/v1/templates/save`, `/api/v1/templates/apply`
+- POST `/api/v1/runs/start`, `/api/v1/runs/complete` and GET `/api/v1/runs/{run_id}`
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Commit policy:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- Conventional Commits; prefer small, single-file edits per commit.
+- Examples: `feat(core): add JSON logging`, `chore(frontend): move file to monorepo`.
 
-# Step 3: Install the necessary dependencies.
-npm i
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a6b9bad3-7c9b-4e13-91fa-9b2be09a9745) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
