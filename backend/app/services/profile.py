@@ -62,7 +62,8 @@ def profile_table(df: pd.DataFrame, table_name: str, sample_n: int) -> TableProf
         dtype = dtype_to_simple(s.dtype)
         nulls = int(s.isna().sum())
         unique_count = int(s.nunique(dropna=True))
-        cand_pk = unique_count >= min(len(df_sample), sample_n) * 0.99 and nulls == 0
+        from app.core.config import settings as cfg_settings
+        cand_pk = unique_count >= min(len(df_sample), sample_n) * cfg_settings.pk_unique_ratio and nulls == 0
         examples = _safe_examples(s, 3)
         # Import settings at call time to honor env changes in tests
         from app.core.config import settings as cfg_settings

@@ -145,7 +145,14 @@ def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: in
             overlap, ex_a, ex_b = _value_overlap(left_df[lc], right_df[rc], sample_n=sample_n)
             emb = _cosine(le[i], re[j])
 
-            conf = 0.45 * name + 0.20 * type_compat + 0.20 * overlap + 0.15 * emb
+            w_n = settings.match_weight_name
+            w_t = settings.match_weight_type
+            w_o = settings.match_weight_overlap
+            w_e = settings.match_weight_embed
+            total = max(1e-9, (w_n + w_t + w_o + w_e))
+            # normalize if weights do not sum ~1
+            w_n, w_t, w_o, w_e = (w_n/total, w_t/total, w_o/total, w_e/total)
+            conf = w_n * name + w_t * type_compat + w_o * overlap + w_e * emb
             thr = threshold if threshold is not None else settings.match_auto_threshold
             decision = "auto" if conf >= thr else "review"
             reasons, warnings = _reasons_and_warnings({

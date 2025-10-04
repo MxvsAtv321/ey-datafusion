@@ -103,7 +103,7 @@ async def match(request: Request, files: List[UploadFile] = File(...), threshold
 
 
 @router.post("/merge", dependencies=[Depends(require_api_key)])
-async def merge(request: Request, files: List[UploadFile] = File(...), decisions: str | None = Form(default=None), limit: int = Query(default=50, ge=1, le=500), entity_resolution: str | None = Query(default=None)):
+async def merge(request: Request, files: List[UploadFile] = File(...), decisions: str | None = Form(default=None), limit: int = Query(default=settings.merge_preview_default, ge=1, le=settings.merge_preview_max), entity_resolution: str | None = Query(default=None)):
     if len(files) != 2:
         raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
     dfs = []

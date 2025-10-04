@@ -28,13 +28,13 @@ def put_object(name: str, content: bytes, content_type: str = "application/octet
     return f"s3://{bucket}/{name}"
 
 
-def presigned_url(name: str, expires: int = 3600) -> str:
+def presigned_url(name: str, expires: int | None = None) -> str:
     bucket = settings.s3_bucket or "ey-datafusion"
     c = _client()
     return c.generate_presigned_url(
         ClientMethod="get_object",
         Params={"Bucket": bucket, "Key": name},
-        ExpiresIn=expires,
+        ExpiresIn=expires if expires is not None else settings.s3_presign_ttl,
     )
 
 

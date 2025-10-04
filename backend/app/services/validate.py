@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from ..schemas.validate import ValidateResponse, ValidationViolation, ValidateSummary
+from ..core.config import settings
 
 
 def _violation(rule: str, count: int, sample: List[int], severity: str = "error") -> ValidationViolation:
@@ -97,14 +98,16 @@ def _outliers(df: pd.DataFrame, field: str, method: str = "iqr", z: float = 3.0)
         q1 = x.quantile(0.25)
         q3 = x.quantile(0.75)
         iqr = q3 - q1
-        lo = q1 - 1.5 * iqr
-        hi = q3 + 1.5 * iqr
+        k = settings.outlier_iqr_k
+        lo = q1 - k * iqr
+        hi = q3 + k * iqr
         mask = (df[field] < lo) | (df[field] > hi)
     else:  # zscore
         mu = x.mean(); sd = x.std(ddof=0)
         if sd == 0:
             return None
-        mask = (df[field] - mu).abs() > (z * sd)
+        zthr = settings.outlier_z if z is None else z
+        mask = (df[field] - mu).abs() > (zthr * sd)
     cnt = int(mask.fillna(False).sum())
     if cnt:
         idxs = df[mask.fillna(False)].index.tolist()[:10]
