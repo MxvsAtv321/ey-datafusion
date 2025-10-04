@@ -12,6 +12,7 @@ import ExportPage from "./pages/ExportPage";
 import NotFound from "./pages/NotFound";
 import { UploadProfilePage } from "./features/uploadProfile";
 import { SuggestMappingsPage } from "./features/mappings";
+import { MergeValidatePage } from "./features/mergeValidate";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,8 @@ const App = () => (
                 <Route path="/upload-profile" element={<UploadProfilePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/mapping" element={<SuggestMappingsPage />} />
+                <Route path="/mappings/suggest" element={<SuggestMappingsPage />} />
+                <Route path="/merge-validate" element={<MergeValidatePage />} />
                 <Route path="/merge" element={<MergePage />} />
                 <Route path="/export" element={<ExportPage />} />
                 <Route path="*" element={<NotFound />} />

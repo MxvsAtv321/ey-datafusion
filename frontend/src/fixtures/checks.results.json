@@ -1,0 +1,189 @@
+{
+  "runId": "run-123",
+  "summary": {
+    "total": 12,
+    "byKind": {
+      "missing_required": 3,
+      "invalid_format": 4,
+      "invalid_code": 2,
+      "duplicate_key": 3
+    }
+  },
+  "issues": [
+    {
+      "id": "issue-1",
+      "kind": "missing_required",
+      "column": "account_number",
+      "rowIndex": 2,
+      "message": "Account number is required but missing",
+      "suggestion": {
+        "label": "Fill with 'UNKNOWN'",
+        "patch": {
+          "type": "set_value",
+          "value": "UNKNOWN"
+        }
+      }
+    },
+    {
+      "id": "issue-2",
+      "kind": "missing_required",
+      "column": "email",
+      "rowIndex": 4,
+      "message": "Email address is required but missing",
+      "suggestion": {
+        "label": "Fill with 'no-email@example.com'",
+        "patch": {
+          "type": "set_value",
+          "value": "no-email@example.com"
+        }
+      }
+    },
+    {
+      "id": "issue-3",
+      "kind": "missing_required",
+      "column": "phone",
+      "rowIndex": 6,
+      "message": "Phone number is required but missing",
+      "suggestion": {
+        "label": "Fill with '000-000-0000'",
+        "patch": {
+          "type": "set_value",
+          "value": "000-000-0000"
+        }
+      }
+    },
+    {
+      "id": "issue-4",
+      "kind": "invalid_format",
+      "column": "email",
+      "rowIndex": 0,
+      "message": "Email format is invalid (contains uppercase)",
+      "suggestion": {
+        "label": "Lowercase + trim",
+        "patch": {
+          "kind": "to_lower",
+          "targetColumn": "email",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "issue-5",
+      "kind": "invalid_format",
+      "column": "email",
+      "rowIndex": 1,
+      "message": "Email format is invalid (contains extra spaces)",
+      "suggestion": {
+        "label": "Trim spaces",
+        "patch": {
+          "kind": "trim_spaces",
+          "targetColumn": "email",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "issue-6",
+      "kind": "invalid_format",
+      "column": "phone",
+      "rowIndex": 2,
+      "message": "Phone number format is invalid",
+      "suggestion": {
+        "label": "Format as XXX-XXX-XXXX",
+        "patch": {
+          "type": "regex_replace",
+          "pattern": "^(\\d{3})(\\d{3})(\\d{4})$",
+          "replace": "$1-$2-$3"
+        }
+      }
+    },
+    {
+      "id": "issue-7",
+      "kind": "invalid_format",
+      "column": "balance",
+      "rowIndex": 3,
+      "message": "Balance format is invalid (not a number)",
+      "suggestion": {
+        "label": "Cast to number",
+        "patch": {
+          "kind": "cast_number",
+          "targetColumn": "balance",
+          "enabled": true
+        }
+      }
+    },
+    {
+      "id": "issue-8",
+      "kind": "invalid_code",
+      "column": "account_type",
+      "rowIndex": 1,
+      "message": "Account type 'premium' is not in allowed values",
+      "suggestion": {
+        "label": "Map to 'savings'",
+        "patch": {
+          "type": "set_value",
+          "value": "savings"
+        }
+      }
+    },
+    {
+      "id": "issue-9",
+      "kind": "invalid_code",
+      "column": "account_type",
+      "rowIndex": 4,
+      "message": "Account type 'business' is not in allowed values",
+      "suggestion": {
+        "label": "Map to 'checking'",
+        "patch": {
+          "type": "set_value",
+          "value": "checking"
+        }
+      }
+    },
+    {
+      "id": "issue-10",
+      "kind": "duplicate_key",
+      "column": "account_number",
+      "rowIndex": 0,
+      "message": "Duplicate account number found",
+      "suggestion": {
+        "label": "Dedupe keep first",
+        "patch": {
+          "type": "regex_replace",
+          "pattern": "^(.*)$",
+          "replace": "$1"
+        }
+      }
+    },
+    {
+      "id": "issue-11",
+      "kind": "duplicate_key",
+      "column": "account_number",
+      "rowIndex": 5,
+      "message": "Duplicate account number found",
+      "suggestion": {
+        "label": "Dedupe keep first",
+        "patch": {
+          "type": "regex_replace",
+          "pattern": "^(.*)$",
+          "replace": "$1"
+        }
+      }
+    },
+    {
+      "id": "issue-12",
+      "kind": "duplicate_key",
+      "column": "email",
+      "rowIndex": 7,
+      "message": "Duplicate email address found",
+      "suggestion": {
+        "label": "Dedupe keep first",
+        "patch": {
+          "type": "regex_replace",
+          "pattern": "^(.*)$",
+          "replace": "$1"
+        }
+      }
+    }
+  ]
+}

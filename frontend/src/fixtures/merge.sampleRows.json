@@ -1,0 +1,202 @@
+{
+  "bankA": [
+    {
+      "account_number": "ACC001234567",
+      "first_name": "  John  ",
+      "last_name": "  DOE  ",
+      "email": "JOHN.DOE@EMAIL.COM",
+      "phone": "555-123-4567",
+      "balance": "1250.50",
+      "open_date": "2020-01-15",
+      "account_type": "checking",
+      "branch_code": "001"
+    },
+    {
+      "account_number": "ACC001234568",
+      "first_name": "Jane",
+      "last_name": "Smith",
+      "email": "jane.smith@email.com",
+      "phone": "555-987-6543",
+      "balance": "2500.75",
+      "open_date": "2019-03-22",
+      "account_type": "savings",
+      "branch_code": "002"
+    },
+    {
+      "account_number": "ACC001234569",
+      "first_name": "  BOB  ",
+      "last_name": "JOHNSON",
+      "email": "bob.johnson@EMAIL.COM",
+      "phone": "555-456-7890",
+      "balance": "500.00",
+      "open_date": "2021-07-10",
+      "account_type": "checking",
+      "branch_code": "001"
+    },
+    {
+      "account_number": "ACC001234570",
+      "first_name": "Alice",
+      "last_name": "Williams",
+      "email": "alice.williams@email.com",
+      "phone": "555-321-0987",
+      "balance": "7500.25",
+      "open_date": "2018-11-05",
+      "account_type": "savings",
+      "branch_code": "003"
+    },
+    {
+      "account_number": "ACC001234571",
+      "first_name": "  CHARLIE  ",
+      "last_name": "  BROWN  ",
+      "email": "CHARLIE.BROWN@EMAIL.COM",
+      "phone": "555-654-3210",
+      "balance": "100.00",
+      "open_date": "2022-02-14",
+      "account_type": "checking",
+      "branch_code": "002"
+    }
+  ],
+  "bankB": [
+    {
+      "acct_id": "B123456789",
+      "fname": "Michael",
+      "lname": "Davis",
+      "email_addr": "michael.davis@email.com",
+      "phone_num": "555-111-2222",
+      "acct_balance": "3200.00",
+      "created_date": "2020-05-20",
+      "acct_type": "checking",
+      "location_id": "L001"
+    },
+    {
+      "acct_id": "B123456790",
+      "fname": "  SARAH  ",
+      "lname": "  WILSON  ",
+      "email_addr": "SARAH.WILSON@EMAIL.COM",
+      "phone_num": "555-333-4444",
+      "acct_balance": "1800.50",
+      "created_date": "2019-08-12",
+      "acct_type": "savings",
+      "location_id": "L002"
+    },
+    {
+      "acct_id": "B123456791",
+      "fname": "David",
+      "lname": "Miller",
+      "email_addr": "david.miller@email.com",
+      "phone_num": "555-555-6666",
+      "acct_balance": "4500.75",
+      "created_date": "2021-01-30",
+      "acct_type": "checking",
+      "location_id": "L001"
+    },
+    {
+      "acct_id": "B123456792",
+      "fname": "  LISA  ",
+      "lname": "GARCIA",
+      "email_addr": "lisa.garcia@EMAIL.COM",
+      "phone_num": "555-777-8888",
+      "acct_balance": "900.25",
+      "created_date": "2022-06-15",
+      "acct_type": "savings",
+      "location_id": "L003"
+    },
+    {
+      "acct_id": "B123456793",
+      "fname": "Robert",
+      "lname": "Martinez",
+      "email_addr": "robert.martinez@email.com",
+      "phone_num": "555-999-0000",
+      "acct_balance": "2100.00",
+      "created_date": "2020-12-03",
+      "acct_type": "checking",
+      "location_id": "L002"
+    }
+  ],
+  "mappings": [
+    {
+      "candidateId": "map1",
+      "fromColumn": "account_number",
+      "toColumn": "account_number",
+      "sourceDataset": "bankA"
+    },
+    {
+      "candidateId": "map2", 
+      "fromColumn": "acct_id",
+      "toColumn": "account_number",
+      "sourceDataset": "bankB"
+    },
+    {
+      "candidateId": "map3",
+      "fromColumn": "first_name",
+      "toColumn": "first_name", 
+      "sourceDataset": "bankA"
+    },
+    {
+      "candidateId": "map4",
+      "fromColumn": "fname",
+      "toColumn": "first_name",
+      "sourceDataset": "bankB"
+    },
+    {
+      "candidateId": "map5",
+      "fromColumn": "last_name",
+      "toColumn": "last_name",
+      "sourceDataset": "bankA"
+    },
+    {
+      "candidateId": "map6",
+      "fromColumn": "lname", 
+      "toColumn": "last_name",
+      "sourceDataset": "bankB"
+    },
+    {
+      "candidateId": "map7",
+      "fromColumn": "email",
+      "toColumn": "email",
+      "sourceDataset": "bankA"
+    },
+    {
+      "candidateId": "map8",
+      "fromColumn": "email_addr",
+      "toColumn": "email",
+      "sourceDataset": "bankB"
+    },
+    {
+      "candidateId": "map9",
+      "fromColumn": "phone",
+      "toColumn": "phone",
+      "sourceDataset": "bankA"
+    },
+    {
+      "candidateId": "map10",
+      "fromColumn": "phone_num",
+      "toColumn": "phone",
+      "sourceDataset": "bankB"
+    },
+    {
+      "candidateId": "map11",
+      "fromColumn": "balance",
+      "toColumn": "balance",
+      "sourceDataset": "bankA"
+    },
+    {
+      "candidateId": "map12",
+      "fromColumn": "acct_balance",
+      "toColumn": "balance",
+      "sourceDataset": "bankB"
+    },
+    {
+      "candidateId": "map13",
+      "fromColumn": "open_date",
+      "toColumn": "open_date",
+      "sourceDataset": "bankA"
+    },
+    {
+      "candidateId": "map14",
+      "fromColumn": "created_date",
+      "toColumn": "open_date",
+      "sourceDataset": "bankB"
+    }
+  ]
+}

@@ -89,9 +89,9 @@ export const SuggestMappingsPage: React.FC = () => {
       return;
     }
 
-    // In a real app, this would persist the decisions and navigate to the transform step
+    // Navigate to the Merge & Validate page with the current runId
     toast.success(`Continuing with ${approvedCount} approved mappings`);
-    // navigate('/transform'); // Uncomment when transform page exists
+    navigate(`/merge-validate?runId=${runId}`);
   };
 
   const approvedCount = Array.from(decisions.values()).filter(d => d === 'approved').length;
@@ -242,7 +242,7 @@ export const SuggestMappingsPage: React.FC = () => {
             disabled={!canContinue}
             data-testid="btn-continue-transform"
           >
-            Continue to Transform
+            Continue to Merge 
           </Button>
         </div>
       </div>

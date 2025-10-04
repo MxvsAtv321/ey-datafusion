@@ -7,7 +7,7 @@ const steps = [
   { id: 0, name: "Upload", icon: Upload, path: "/" },
   { id: 1, name: "Profile", icon: FileText, path: "/profile" },
   { id: 2, name: "Mapping", icon: GitMerge, path: "/mapping" },
-  { id: 3, name: "Merge & Validate", icon: CheckCircle, path: "/merge" },
+  { id: 3, name: "Merge & Validate", icon: CheckCircle, path: "/merge-validate" },
   { id: 4, name: "Export", icon: FileDown, path: "/export" },
 ];
 
@@ -16,8 +16,21 @@ export const StepperNav = () => {
   const location = useLocation();
   const { currentStep, setCurrentStep } = useStore();
 
+  // Determine current step based on location
+  const getCurrentStepFromLocation = () => {
+    const pathname = location.pathname;
+    if (pathname === "/" || pathname === "/upload-profile") return 0;
+    if (pathname === "/profile") return 1;
+    if (pathname === "/mapping" || pathname === "/mappings/suggest") return 2;
+    if (pathname === "/merge-validate") return 3;
+    if (pathname === "/export") return 4;
+    return 0; // default to first step
+  };
+
+  const actualCurrentStep = getCurrentStepFromLocation();
+
   const handleStepClick = (step: typeof steps[0]) => {
-    if (step.id <= currentStep) {
+    if (step.id <= actualCurrentStep) {
       setCurrentStep(step.id);
       navigate(step.path);
     }
@@ -26,8 +39,8 @@ export const StepperNav = () => {
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
     if (path === "/profile" && location.pathname === "/profile") return true;
-    if (path === "/mapping" && location.pathname === "/mapping") return true;
-    if (path === "/merge" && location.pathname === "/merge") return true;
+    if (path === "/mapping" && (location.pathname === "/mapping" || location.pathname === "/mappings/suggest")) return true;
+    if (path === "/merge-validate" && location.pathname === "/merge-validate") return true;
     if (path === "/export" && location.pathname === "/export") return true;
     return false;
   };
@@ -36,9 +49,9 @@ export const StepperNav = () => {
     <nav className="w-64 border-r bg-muted/30 p-6" aria-label="Progress">
       <ol className="space-y-2">
         {steps.map((step, idx) => {
-          const isCompleted = step.id < currentStep;
-          const isCurrent = step.id === currentStep;
-          const isClickable = step.id <= currentStep;
+          const isCompleted = step.id < actualCurrentStep;
+          const isCurrent = step.id === actualCurrentStep;
+          const isClickable = step.id <= actualCurrentStep;
 
           return (
             <li key={step.id}>
