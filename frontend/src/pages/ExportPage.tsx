@@ -7,6 +7,7 @@ import { FileDown, Copy, FileText, AlertCircle, Check } from "lucide-react";
 import { api } from "@/api/client";
 import { toast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import SchemaDiff from "@/components/advanced/SchemaDiff";
 
 export default function ExportPage() {
   const { decisions, manifest, setManifest, settings, baselineProfile, profiles } = useStore();
@@ -157,44 +158,7 @@ export default function ExportPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {driftData.changes.map((change: any, idx: number) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 rounded-lg border p-4"
-                >
-                  <AlertCircle
-                    className={`h-5 w-5 mt-0.5 ${
-                      driftData.severity === "critical"
-                        ? "text-destructive"
-                        : driftData.severity === "warning"
-                        ? "text-warning"
-                        : "text-info"
-                    }`}
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium">{change.type.replace(/_/g, " ")}</p>
-                      {change.col && (
-                        <code className="text-xs bg-muted px-2 py-1 rounded">
-                          {change.col}
-                        </code>
-                      )}
-                    </div>
-                    {change.prev && change.curr && (
-                      <p className="text-sm text-muted-foreground">
-                        Changed from <code>{change.prev}</code> to <code>{change.curr}</code>
-                      </p>
-                    )}
-                    {change.delta && (
-                      <p className="text-sm text-muted-foreground">
-                        Null rate delta: {(change.delta * 100).toFixed(1)}%
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SchemaDiff diff={driftData} />
           </CardContent>
         </Card>
       )}
