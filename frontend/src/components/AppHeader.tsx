@@ -90,6 +90,7 @@ export const AppHeader = () => {
                     value={[settings.threshold * 100]}
                     onValueChange={([value]) => setThreshold(value / 100)}
                     className="w-full"
+                    showConfidenceColors={true}
                   />
                   <p className="text-xs text-muted-foreground">
                     Mappings above this threshold are auto-accepted
