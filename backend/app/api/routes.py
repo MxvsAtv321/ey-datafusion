@@ -53,8 +53,11 @@ async def match(request: Request, files: List[UploadFile] = File(...)):
     if len(files) != 2:
         raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
     dfs = []
+    inputs_meta: list[dict] = []
     for f in files:
         content = await f.read()
+        import hashlib
+        inputs_meta.append({"name": f.filename, "size": len(content), "sha256": f"sha256:{hashlib.sha256(content).hexdigest()}"})
         df = load_table(content, f.filename)
         df = normalize_headers(df)
         dfs.append(df)
@@ -73,6 +76,7 @@ async def match(request: Request, files: List[UploadFile] = File(...)):
         run_id=run_id,
     )
     # Fast path: we cannot set best_pick on model, but frontend can infer by max confidence per left
+    add_input_files(run_id, inputs_meta)
     return resp
 
 
@@ -81,8 +85,11 @@ async def merge(request: Request, files: List[UploadFile] = File(...), decisions
     if len(files) != 2:
         raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
     dfs = []
+    inputs_meta: list[dict] = []
     for f in files:
         content = await f.read()
+        import hashlib
+        inputs_meta.append({"name": f.filename, "size": len(content), "sha256": f"sha256:{hashlib.sha256(content).hexdigest()}"})
         df = load_table(content, f.filename)
         df = normalize_headers(df)
         dfs.append(df)
@@ -98,7 +105,13 @@ async def merge(request: Request, files: List[UploadFile] = File(...), decisions
     if entity_resolution == "customers_v1":
         merged, er_stats = er_lite_customers(merged)
     preview = merged.head(limit)
-    resp = {"columns": list(preview.columns), "preview_rows": preview.to_dict(orient="records"), "run_id": getattr(request.state, "run_id", None)}
+    # sanitize NaN/inf for JSON compliance
+    import numpy as np
+    tmp = preview.replace([np.inf, -np.inf], None)
+    tmp = tmp.astype(object).where(pd.notnull(tmp), None)
+    run_id = getattr(request.state, "run_id", None)
+    add_input_files(run_id, inputs_meta)
+    resp = {"columns": list(tmp.columns), "preview_rows": tmp.to_dict(orient="records"), "run_id": run_id}
     if er_stats:
         resp["er_stats"] = er_stats
     return resp

@@ -112,6 +112,17 @@ def _outliers(df: pd.DataFrame, field: str, method: str = "iqr", z: float = 3.0)
     return None
 
 
+def _fk(child_df: pd.DataFrame, child_field: str, parent_df: pd.DataFrame, parent_field: str) -> ValidationViolation | None:
+    if child_field not in child_df.columns or parent_field not in parent_df.columns:
+        return _violation(f"fk({child_field}->{parent_field})", 0, [])
+    missing = ~child_df[child_field].isin(parent_df[parent_field])
+    cnt = int(missing.sum())
+    if cnt:
+        idxs = child_df[missing].index.tolist()[:10]
+        return _violation(f"fk({child_field}->{parent_field})", cnt, idxs)
+    return None
+
+
 def run_validation(df: pd.DataFrame, contract_name: str, aux_tables: Dict[str, pd.DataFrame] | None = None) -> ValidateResponse:
     # Minimal contracts demo
     rules: list = []
@@ -126,11 +137,14 @@ def run_validation(df: pd.DataFrame, contract_name: str, aux_tables: Dict[str, p
             ("not_null", {"field": "account_id"}),
             ("range_num", {"field": "balance", "min_val": 0}),
         ]
+        # Optional FK to customers if provided
+        if aux_tables and "customers" in aux_tables and "customer_id" in df.columns:
+            rules.append(("fk", {"child_field": "customer_id", "parent_table": "customers", "parent_field": "customer_id"}))
     elif contract_name == "loans":
         rules = [
             ("not_null", {"field": "loan_id"}),
             ("date_order", {"start": "start_date", "end": "end_date"}),
-            ("outliers", {"field": "amount", "method": "zscore", "z": 3.0}),
+            ("outliers", {"field": "amount", "method": "iqr"}),
         ]
 
     violations: List[ValidationViolation] = []
@@ -150,6 +164,11 @@ def run_validation(df: pd.DataFrame, contract_name: str, aux_tables: Dict[str, p
             v = _date_order(df, kw["start"], kw["end"])  # type: ignore[index]
         elif name == "outliers":
             v = _outliers(df, kw["field"], kw.get("method", "iqr"), kw.get("z", 3.0))  # type: ignore[index]
+        elif name == "fk":
+            if aux_tables is not None:
+                parent = aux_tables.get(kw.get("parent_table"))  # type: ignore[index]
+                if parent is not None:
+                    v = _fk(df, kw["child_field"], parent, kw["parent_field"])  # type: ignore[index]
         if v:
             violations.append(v)
 
