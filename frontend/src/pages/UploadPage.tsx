@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { Upload, FileText, X, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useStore } from "@/state/store";
 import { useNavigate } from "react-router-dom";
 import { api } from "@/api/client";
@@ -12,6 +13,8 @@ export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const [isLoadingBank1, setIsLoadingBank1] = useState(false);
   const [isLoadingBank2, setIsLoadingBank2] = useState(false);
+  const [uploadProgressBank1, setUploadProgressBank1] = useState(0);
+  const [uploadProgressBank2, setUploadProgressBank2] = useState(0);
   const { 
     bank1Files, 
     bank2Files, 
@@ -70,6 +73,7 @@ export default function UploadPage() {
   const handleProfile = async (bank: 'bank1' | 'bank2') => {
     const filesToProfile = bank === 'bank1' ? bank1Files : bank2Files;
     const setIsLoading = bank === 'bank1' ? setIsLoadingBank1 : setIsLoadingBank2;
+    const setProgress = bank === 'bank1' ? setUploadProgressBank1 : setUploadProgressBank2;
     
     if (filesToProfile.length === 0) {
       toast({
@@ -81,16 +85,39 @@ export default function UploadPage() {
     }
 
     setIsLoading(true);
+    setProgress(0);
+    
+    // Simulate progress updates
+    const progressInterval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return prev;
+        }
+        return prev + Math.random() * 15;
+      });
+    }, 200);
+
     try {
       const result = await api.profile(filesToProfile);
-      setProfiles(result.profiles);
-      setCurrentStep(1);
-      navigate("/profile");
-      toast({
-        title: "✅ Profiling complete",
-        description: `Successfully profiled ${Object.keys(result.profiles).length} files from ${bank === 'bank1' ? 'Bank 1' : 'Bank 2'}`,
-      });
+      
+      // Complete the progress
+      clearInterval(progressInterval);
+      setProgress(100);
+      
+      // Small delay to show 100% completion
+      setTimeout(() => {
+        setProfiles(result.profiles);
+        setCurrentStep(1);
+        navigate("/profile");
+        toast({
+          title: "✅ Profiling complete",
+          description: `Successfully profiled ${Object.keys(result.profiles).length} files from ${bank === 'bank1' ? 'Bank 1' : 'Bank 2'}`,
+        });
+      }, 500);
     } catch (error) {
+      clearInterval(progressInterval);
+      setProgress(0);
       toast({
         title: "Profiling failed",
         description: "Could not profile files. Please try again.",
@@ -104,7 +131,7 @@ export default function UploadPage() {
   return (
     <div className="container max-w-6xl p-6">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold tracking-tight">Upload Data Files</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Upload Data</h2>
         <p className="text-muted-foreground mt-2">
           Upload CSV, XLSX, or JSON files to begin the data fusion process
         </p>
@@ -184,6 +211,20 @@ export default function UploadPage() {
                     </li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {isLoadingBank1 && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Processing files...</span>
+                    <span>{Math.round(uploadProgressBank1)}%</span>
+                  </div>
+                  <Progress value={uploadProgressBank1} className="w-full" />
+                </div>
               </CardContent>
             </Card>
           )}
@@ -271,6 +312,20 @@ export default function UploadPage() {
                     </li>
                   ))}
                 </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {isLoadingBank2 && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Processing files...</span>
+                    <span>{Math.round(uploadProgressBank2)}%</span>
+                  </div>
+                  <Progress value={uploadProgressBank2} className="w-full" />
+                </div>
               </CardContent>
             </Card>
           )}
