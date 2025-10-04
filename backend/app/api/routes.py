@@ -10,6 +10,8 @@ from ..schemas.match import MatchResponse, CandidateMapping
 from fastapi import HTTPException
 from ..services.merge import merge_datasets
 from ..schemas.merge import MappingDecision
+from ..services.validate import run_validation
+from ..schemas.validate import ValidateResponse
 
 
 router = APIRouter()
@@ -68,9 +70,15 @@ async def merge(files: List[UploadFile] = File(...), decisions: dict = Body(defa
     return {"columns": list(preview.columns), "preview_rows": preview.to_dict(orient="records")}
 
 
-@router.post("/validate", dependencies=[Depends(require_api_key)])
+@router.post("/validate", response_model=ValidateResponse, dependencies=[Depends(require_api_key)])
 async def validate(payload: dict = Body(...)):
-    return {"status": "pass", "violations": [], "summary": {"rows": 0, "columns": 0, "warnings": 0}}
+    rows = payload.get("rows")
+    if not isinstance(rows, list):
+        raise HTTPException(status_code=400, detail="Expect rows: list")
+    df = pd.DataFrame(rows)
+    contract = payload.get("contract", "customers")
+    result = run_validation(df, contract, aux_tables=None)
+    return result
 
 
 @router.post("/docs", dependencies=[Depends(require_api_key)])
