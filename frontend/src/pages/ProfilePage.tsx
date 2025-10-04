@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import { useProfileDatasets } from "@/api/profile";
 import { ProfileSummary } from "@/features/uploadProfile/components/ProfileSummary";
+import { BankSelector } from "@/features/uploadProfile/components/BankSelector";
 import { DatasetProfile } from "@/types/profile";
 import { toast } from "@/hooks/use-toast";
 
@@ -24,6 +25,7 @@ export default function ProfilePage() {
   const [profiles, setProfiles] = useState<{ bankA: DatasetProfile; bankB: DatasetProfile } | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedBank, setSelectedBank] = useState<"bankA" | "bankB">("bankA");
 
   const profileMutation = useProfileDatasets();
 
@@ -75,6 +77,21 @@ export default function ProfilePage() {
   const handleNextToMapping = () => {
     navigate("/mapping");
   };
+
+  const handleBankChange = (bank: "bankA" | "bankB") => {
+    setSelectedBank(bank);
+  };
+
+  // Calculate stats for each bank
+  const getBankStats = (profile: DatasetProfile) => ({
+    rowCount: profile.rowCountSampled,
+    columnCount: profile.columns.length,
+    highBlanksCount: profile.columns.filter(col => col.blanksPct > 10).length,
+    likelyKeysCount: profile.likelyKeys.length,
+  });
+
+  const bankAStats = profiles ? getBankStats(profiles.bankA) : { rowCount: 0, columnCount: 0, highBlanksCount: 0, likelyKeysCount: 0 };
+  const bankBStats = profiles ? getBankStats(profiles.bankB) : { rowCount: 0, columnCount: 0, highBlanksCount: 0, likelyKeysCount: 0 };
 
   if (!runId) {
     return (
@@ -147,18 +164,24 @@ export default function ProfilePage() {
         </div>
       )}
 
+      {/* Bank Selector */}
+      {profiles && !isLoading && (
+        <BankSelector
+          selectedBank={selectedBank}
+          onBankChange={handleBankChange}
+          bankAStats={bankAStats}
+          bankBStats={bankBStats}
+        />
+      )}
+
       {/* Profile Data */}
       {profiles && !isLoading && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Bank A</h2>
-              <ProfileSummary profile={profiles.bankA} testId="bankA" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold mb-4">Bank B</h2>
-              <ProfileSummary profile={profiles.bankB} testId="bankB" />
-            </div>
+          <div className="transition-all duration-300 ease-in-out">
+            <ProfileSummary 
+              profile={selectedBank === "bankA" ? profiles.bankA : profiles.bankB} 
+              testId={selectedBank} 
+            />
           </div>
 
           {/* Action Buttons */}
