@@ -92,8 +92,15 @@ export default function UploadPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Bank 1 Data Upload */}
         <div className="space-y-6">
           <Card>
+            <CardHeader>
+              <CardTitle>Bank 1 Data</CardTitle>
+              <CardDescription>
+                Upload CSV, XLSX, or JSON files from Bank 1
+              </CardDescription>
+            </CardHeader>
             <CardContent className="p-6">
               <div
                 onDragEnter={handleDrag}
@@ -113,7 +120,7 @@ export default function UploadPage() {
                   accept=".csv,.xlsx,.json"
                   onChange={handleFileInput}
                   className="absolute inset-0 cursor-pointer opacity-0"
-                  aria-label="File upload"
+                  aria-label="Bank 1 file upload"
                 />
                 <Upload className="h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-lg font-medium mb-2">
@@ -172,73 +179,56 @@ export default function UploadPage() {
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>How It Works</CardTitle>
-            <CardDescription>
-              DataFusion automates the data integration process
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                1
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Upload Files</h4>
+        {/* Bank 2 Data Upload */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bank 2 Data</CardTitle>
+              <CardDescription>
+                Upload CSV, XLSX, or JSON files from Bank 2
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                className={cn(
+                  "relative flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+                  dragActive
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                )}
+              >
+                <input
+                  type="file"
+                  multiple
+                  accept=".csv,.xlsx,.json"
+                  onChange={handleFileInput}
+                  className="absolute inset-0 cursor-pointer opacity-0"
+                  aria-label="Bank 2 file upload"
+                />
+                <Upload className="h-12 w-12 text-muted-foreground mb-4" />
+                <p className="text-lg font-medium mb-2">
+                  Drop files here or click to browse
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  Upload multiple data files from different sources
+                  Supports CSV, XLSX, JSON
                 </p>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="flex gap-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                2
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Profile & Analyze</h4>
-                <p className="text-sm text-muted-foreground">
-                  AI detects data types, patterns, and semantic tags
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                3
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Review Mappings</h4>
-                <p className="text-sm text-muted-foreground">
-                  Human-in-the-loop review of automated column mappings
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                4
-              </div>
-              <div>
-                <h4 className="font-medium mb-1">Validate & Export</h4>
-                <p className="text-sm text-muted-foreground">
-                  Ensure data quality and export unified dataset
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 rounded-lg border border-info/50 bg-info/5 p-3 mt-6">
-              <CheckCircle className="h-5 w-5 text-info mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-info mb-1">Accessibility First</p>
-                <p className="text-muted-foreground">
-                  Full keyboard navigation, screen reader support, and WCAG AA+ compliance
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <Button
+            onClick={handleProfile}
+            disabled={files.length === 0 || isLoading}
+            size="lg"
+            className="w-full"
+          >
+            {isLoading ? "Profiling..." : "Profile Selected Files"}
+          </Button>
+        </div>
       </div>
     </div>
   );
