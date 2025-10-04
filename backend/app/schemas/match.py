@@ -13,15 +13,19 @@ class CandidateMapping(BaseModel):
     )
     confidence: float = Field(..., ge=0.0, le=1.0)
     decision: Literal["auto", "review"]
+    reasons: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
     explain: Optional[Dict[str, List[str]]] = Field(
         default=None,
         description="Sample values: {left_examples, right_examples}",
     )
+    best_pick: bool | None = None
 
 
 class MatchResponse(BaseModel):
     candidates: List[CandidateMapping]
     threshold: float | None = None
     run_id: str | None = None
+    stats: Optional[Dict[str, float]] = None
 
 

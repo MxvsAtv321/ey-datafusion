@@ -24,6 +24,7 @@ class TableProfile(BaseModel):
 
 class ProfileResponse(BaseModel):
     profiles: Dict[str, TableProfile]
+    examples_masked: bool | None = None
 
 
 

@@ -13,6 +13,8 @@ class Settings:
     disable_openapi: bool = os.getenv("DISABLE_OPENAPI", "false").lower() in {"1", "true", "yes"}
     allowed_origins: list[str] = field(default_factory=lambda: [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()])
     required_rules: list[str] = field(default_factory=lambda: [r.strip() for r in os.getenv("REQUIRED_RULES", "").split(",") if r.strip()])
+    review_seconds_per_field: int = int(os.getenv("REVIEW_SECONDS_PER_FIELD", "12"))
+    profile_examples_masked: bool = os.getenv("PROFILE_EXAMPLES_MASKED", "true").lower() in {"1","true","yes"}
 
     # DB
     db_dsn: str | None = os.getenv("DB_DSN")
