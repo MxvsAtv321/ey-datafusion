@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, Body
+import pandas as pd
 from typing import Dict, List
 from ..core.security import require_api_key
 from ..core.config import settings
