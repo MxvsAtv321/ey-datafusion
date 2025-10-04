@@ -1,0 +1,486 @@
+{
+  "runId": "RUN-20251004-1015-9f3a",
+  "computedAt": "2025-10-04T10:15:00Z",
+  "candidates": [
+    {
+      "id": "c1",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "acct_id",
+      "toColumn": "account_number",
+      "confidence": 0.93,
+      "reasons": [
+        {"title":"Token similarity","detail":"Normalized token overlap and edit distance are high."},
+        {"title":"Format pattern match","detail":"Both columns are mostly 10–12 digit numerics with similar checksum distribution."}
+      ],
+      "examplePairs": [
+        {"from":"1234567890", "to":"1234567890"},
+        {"from":"9988776655", "to":"9988776655"}
+      ]
+    },
+    {
+      "id": "c2",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "fname",
+      "toColumn": "first_name",
+      "confidence": 0.81,
+      "reasons": [
+        {"title":"Synonym dictionary","detail":"Known alias mapping for first name fields."},
+        {"title":"Value distribution","detail":"Top-50 tokens show strong overlap after case-folding."}
+      ],
+      "examplePairs": [
+        {"from":"Alice","to":"Alice"},
+        {"from":"Rahul","to":"Rahul"}
+      ]
+    },
+    {
+      "id": "c3",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "lname",
+      "toColumn": "last_name",
+      "confidence": 0.79,
+      "reasons": [
+        {"title":"Synonym dictionary","detail":"Known alias mapping for last name fields."},
+        {"title":"Value distribution","detail":"Top-50 tokens show strong overlap after case-folding."}
+      ],
+      "examplePairs": [
+        {"from":"Smith","to":"Smith"},
+        {"from":"Johnson","to":"Johnson"}
+      ]
+    },
+    {
+      "id": "c4",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "email_addr",
+      "toColumn": "email",
+      "confidence": 0.88,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain valid email addresses with similar domain distribution."},
+        {"title":"Value distribution","detail":"High overlap in email patterns and common domains."}
+      ],
+      "examplePairs": [
+        {"from":"john@example.com","to":"john@example.com"},
+        {"from":"jane@company.org","to":"jane@company.org"}
+      ]
+    },
+    {
+      "id": "c5",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "phone_num",
+      "toColumn": "phone_number",
+      "confidence": 0.85,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain phone numbers with similar formatting patterns."},
+        {"title":"Value distribution","detail":"Strong overlap in phone number formats and area codes."}
+      ],
+      "examplePairs": [
+        {"from":"(555) 123-4567","to":"555-123-4567"},
+        {"from":"(212) 987-6543","to":"212-987-6543"}
+      ]
+    },
+    {
+      "id": "c6",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "dob",
+      "toColumn": "date_of_birth",
+      "confidence": 0.92,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain dates in similar formats."},
+        {"title":"Value distribution","detail":"Date ranges and patterns show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"1990-05-15","to":"1990-05-15"},
+        {"from":"1985-12-03","to":"1985-12-03"}
+      ]
+    },
+    {
+      "id": "c7",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "ssn",
+      "toColumn": "social_security_number",
+      "confidence": 0.95,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain SSNs with identical formatting (XXX-XX-XXXX)."},
+        {"title":"Value distribution","detail":"Perfect match in SSN patterns and checksum validation."}
+      ],
+      "examplePairs": [
+        {"from":"123-45-6789","to":"123-45-6789"},
+        {"from":"987-65-4321","to":"987-65-4321"}
+      ]
+    },
+    {
+      "id": "c8",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "addr_line1",
+      "toColumn": "address_line_1",
+      "confidence": 0.76,
+      "reasons": [
+        {"title":"Synonym dictionary","detail":"Known alias mapping for address fields."},
+        {"title":"Value distribution","detail":"Address patterns show good overlap in street names and numbers."}
+      ],
+      "examplePairs": [
+        {"from":"123 Main St","to":"123 Main Street"},
+        {"from":"456 Oak Ave","to":"456 Oak Avenue"}
+      ]
+    },
+    {
+      "id": "c9",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "city_name",
+      "toColumn": "city",
+      "confidence": 0.83,
+      "reasons": [
+        {"title":"Value distribution","detail":"City names show strong overlap with common US cities."},
+        {"title":"Format pattern match","detail":"Both columns contain proper case city names."}
+      ],
+      "examplePairs": [
+        {"from":"New York","to":"New York"},
+        {"from":"Los Angeles","to":"Los Angeles"}
+      ]
+    },
+    {
+      "id": "c10",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "state_cd",
+      "toColumn": "state",
+      "confidence": 0.89,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain 2-letter state codes."},
+        {"title":"Value distribution","detail":"Perfect match in state code abbreviations."}
+      ],
+      "examplePairs": [
+        {"from":"NY","to":"NY"},
+        {"from":"CA","to":"CA"}
+      ]
+    },
+    {
+      "id": "c11",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "zip_code",
+      "toColumn": "postal_code",
+      "confidence": 0.87,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain 5-digit ZIP codes with similar patterns."},
+        {"title":"Value distribution","detail":"ZIP code ranges show strong geographic correlation."}
+      ],
+      "examplePairs": [
+        {"from":"10001","to":"10001"},
+        {"from":"90210","to":"90210"}
+      ]
+    },
+    {
+      "id": "c12",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "balance_amt",
+      "toColumn": "account_balance",
+      "confidence": 0.91,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain currency values with similar decimal precision."},
+        {"title":"Value distribution","detail":"Balance ranges and distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"1250.50","to":"1250.50"},
+        {"from":"50000.00","to":"50000.00"}
+      ]
+    },
+    {
+      "id": "c13",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "acct_type",
+      "toColumn": "account_type",
+      "confidence": 0.78,
+      "reasons": [
+        {"title":"Value distribution","detail":"Account type values show good overlap in categories."},
+        {"title":"Format pattern match","detail":"Both columns contain similar account type codes."}
+      ],
+      "examplePairs": [
+        {"from":"CHECKING","to":"CHECKING"},
+        {"from":"SAVINGS","to":"SAVINGS"}
+      ]
+    },
+    {
+      "id": "c14",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "open_date",
+      "toColumn": "account_open_date",
+      "confidence": 0.86,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain dates in similar formats."},
+        {"title":"Value distribution","detail":"Date ranges show strong correlation in account opening patterns."}
+      ],
+      "examplePairs": [
+        {"from":"2020-01-15","to":"2020-01-15"},
+        {"from":"2019-06-30","to":"2019-06-30"}
+      ]
+    },
+    {
+      "id": "c15",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "last_trans_date",
+      "toColumn": "last_transaction_date",
+      "confidence": 0.84,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain transaction dates in similar formats."},
+        {"title":"Value distribution","detail":"Transaction date patterns show good correlation."}
+      ],
+      "examplePairs": [
+        {"from":"2024-01-15","to":"2024-01-15"},
+        {"from":"2024-02-28","to":"2024-02-28"}
+      ]
+    },
+    {
+      "id": "c16",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "trans_count",
+      "toColumn": "transaction_count",
+      "confidence": 0.82,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain integer counts with similar ranges."},
+        {"title":"Value distribution","detail":"Transaction count distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"25","to":"25"},
+        {"from":"150","to":"150"}
+      ]
+    },
+    {
+      "id": "c17",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "credit_score",
+      "toColumn": "fico_score",
+      "confidence": 0.88,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain credit scores in similar ranges (300-850)."},
+        {"title":"Value distribution","detail":"Credit score distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"750","to":"750"},
+        {"from":"680","to":"680"}
+      ]
+    },
+    {
+      "id": "c18",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "employer_name",
+      "toColumn": "company",
+      "confidence": 0.74,
+      "reasons": [
+        {"title":"Value distribution","detail":"Employer names show moderate overlap in common companies."},
+        {"title":"Format pattern match","detail":"Both columns contain company names with similar formatting."}
+      ],
+      "examplePairs": [
+        {"from":"Acme Corp","to":"Acme Corporation"},
+        {"from":"Tech Inc","to":"Tech Incorporated"}
+      ]
+    },
+    {
+      "id": "c19",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "job_title",
+      "toColumn": "position",
+      "confidence": 0.71,
+      "reasons": [
+        {"title":"Value distribution","detail":"Job titles show moderate overlap in common positions."},
+        {"title":"Format pattern match","detail":"Both columns contain job titles with similar formatting."}
+      ],
+      "examplePairs": [
+        {"from":"Software Engineer","to":"Software Engineer"},
+        {"from":"Manager","to":"Manager"}
+      ]
+    },
+    {
+      "id": "c20",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "annual_income",
+      "toColumn": "yearly_salary",
+      "confidence": 0.89,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain salary values with similar ranges and precision."},
+        {"title":"Value distribution","detail":"Income distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"75000","to":"75000"},
+        {"from":"120000","to":"120000"}
+      ]
+    },
+    {
+      "id": "c21",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "marital_status",
+      "toColumn": "marriage_status",
+      "confidence": 0.77,
+      "reasons": [
+        {"title":"Value distribution","detail":"Marital status values show good overlap in categories."},
+        {"title":"Format pattern match","detail":"Both columns contain similar status codes."}
+      ],
+      "examplePairs": [
+        {"from":"SINGLE","to":"SINGLE"},
+        {"from":"MARRIED","to":"MARRIED"}
+      ]
+    },
+    {
+      "id": "c22",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "num_dependents",
+      "toColumn": "dependents_count",
+      "confidence": 0.85,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain dependent counts with similar ranges."},
+        {"title":"Value distribution","detail":"Dependent count distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"2","to":"2"},
+        {"from":"0","to":"0"}
+      ]
+    },
+    {
+      "id": "c23",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "home_owner",
+      "toColumn": "owns_home",
+      "confidence": 0.83,
+      "reasons": [
+        {"title":"Value distribution","detail":"Home ownership values show good overlap in boolean-like fields."},
+        {"title":"Format pattern match","detail":"Both columns contain similar ownership indicators."}
+      ],
+      "examplePairs": [
+        {"from":"YES","to":"TRUE"},
+        {"from":"NO","to":"FALSE"}
+      ]
+    },
+    {
+      "id": "c24",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "vehicle_count",
+      "toColumn": "cars_owned",
+      "confidence": 0.79,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain vehicle counts with similar ranges."},
+        {"title":"Value distribution","detail":"Vehicle count distributions show good correlation."}
+      ],
+      "examplePairs": [
+        {"from":"1","to":"1"},
+        {"from":"2","to":"2"}
+      ]
+    },
+    {
+      "id": "c25",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "loan_balance",
+      "toColumn": "outstanding_loans",
+      "confidence": 0.87,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain loan amounts with similar precision."},
+        {"title":"Value distribution","detail":"Loan balance distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"25000.00","to":"25000.00"},
+        {"from":"150000.00","to":"150000.00"}
+      ]
+    },
+    {
+      "id": "c26",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "credit_limit",
+      "toColumn": "max_credit",
+      "confidence": 0.91,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain credit limits with similar ranges and precision."},
+        {"title":"Value distribution","detail":"Credit limit distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"5000.00","to":"5000.00"},
+        {"from":"25000.00","to":"25000.00"}
+      ]
+    },
+    {
+      "id": "c27",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "payment_history",
+      "toColumn": "payments_on_time",
+      "confidence": 0.76,
+      "reasons": [
+        {"title":"Value distribution","detail":"Payment history values show moderate overlap in categories."},
+        {"title":"Format pattern match","detail":"Both columns contain similar payment status indicators."}
+      ],
+      "examplePairs": [
+        {"from":"EXCELLENT","to":"EXCELLENT"},
+        {"from":"GOOD","to":"GOOD"}
+      ]
+    },
+    {
+      "id": "c28",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "delinquency_count",
+      "toColumn": "late_payments",
+      "confidence": 0.84,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain delinquency counts with similar ranges."},
+        {"title":"Value distribution","detail":"Delinquency count distributions show strong correlation."}
+      ],
+      "examplePairs": [
+        {"from":"0","to":"0"},
+        {"from":"2","to":"2"}
+      ]
+    },
+    {
+      "id": "c29",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "bankruptcy_flag",
+      "toColumn": "has_bankruptcy",
+      "confidence": 0.88,
+      "reasons": [
+        {"title":"Value distribution","detail":"Bankruptcy flags show good overlap in boolean-like fields."},
+        {"title":"Format pattern match","detail":"Both columns contain similar bankruptcy indicators."}
+      ],
+      "examplePairs": [
+        {"from":"N","to":"FALSE"},
+        {"from":"Y","to":"TRUE"}
+      ]
+    },
+    {
+      "id": "c30",
+      "fromDataset": "bankA",
+      "toDataset": "bankB",
+      "fromColumn": "tax_id",
+      "toColumn": "ein",
+      "confidence": 0.35,
+      "reasons": [
+        {"title":"Format pattern match","detail":"Both columns contain tax ID numbers but with different formats."},
+        {"title":"Value distribution","detail":"Tax ID patterns show some overlap but different validation rules."}
+      ],
+      "examplePairs": [
+        {"from":"12-3456789","to":"123456789"},
+        {"from":"98-7654321","to":"987654321"}
+      ]
+    }
+  ]
+}

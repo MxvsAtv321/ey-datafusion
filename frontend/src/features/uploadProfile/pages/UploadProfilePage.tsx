@@ -122,7 +122,7 @@ export const UploadProfilePage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Upload & Profile</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Upload Files</h1>
           <p className="text-muted-foreground mt-2">
             Upload your bank datasets and generate detailed profiles
           </p>

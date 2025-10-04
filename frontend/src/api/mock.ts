@@ -7,6 +7,7 @@ import {
   DocsResponse,
   DriftResponse,
 } from "./types";
+import { SuggestResponse } from "../types/mapping";
 
 const mockProfiles: ProfileResponse = {
   profiles: {
@@ -276,5 +277,15 @@ export const handlers = [
   http.post("/api/v1/drift/check", async () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     return HttpResponse.json(mockDrift);
+  }),
+
+  http.get("/api/mappings/suggest", async ({ request }) => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    
+    // Import the fixture data
+    const fixture = await import("../fixtures/mappings.suggest.json");
+    const data: SuggestResponse = fixture.default;
+    
+    return HttpResponse.json(data);
   }),
 ];

@@ -1,5 +1,6 @@
 import { RunInfo } from "@/types/run";
 import { DatasetProfile } from "@/types/profile";
+import { SuggestResponse } from "@/types/mapping";
 import { secureMode } from "@/config/app";
 
 // Helper to mask sensitive data in secure mode
@@ -105,6 +106,38 @@ export const MockService = {
       return {
         bankA: fallbackProfile,
         bankB: { ...fallbackProfile, datasetId: "bankB" },
+      };
+    }
+  },
+
+  suggestMappings: async (runId: string): Promise<SuggestResponse> => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 200));
+    
+    try {
+      // Import fixture dynamically
+      const fixture = await import("@/fixtures/mappings.suggest.json");
+      const data = fixture.default;
+      
+      // Mask examples in secure mode
+      if (secureMode) {
+        data.candidates = data.candidates.map(candidate => ({
+          ...candidate,
+          examplePairs: candidate.examplePairs.map(pair => ({
+            from: maskValue(pair.from),
+            to: maskValue(pair.to),
+          })),
+        }));
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error loading mappings fixture:", error);
+      // Return fallback data
+      return {
+        runId,
+        computedAt: new Date().toISOString(),
+        candidates: [],
       };
     }
   },
