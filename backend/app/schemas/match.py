@@ -21,5 +21,7 @@ class CandidateMapping(BaseModel):
 
 class MatchResponse(BaseModel):
     candidates: List[CandidateMapping]
+    threshold: float | None = None
+    run_id: str | None = None
 
 

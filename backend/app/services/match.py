@@ -65,7 +65,30 @@ def _value_overlap(sa: pd.Series, sb: pd.Series, sample_n: int) -> Tuple[float, 
     jacc = len(inter) / max(1, len(union))
     ex_a = list(sa.dropna().astype(str).head(3).unique())
     ex_b = list(sb.dropna().astype(str).head(3).unique())
-    return jacc, ex_a, ex_b
+    return jacc, _mask_examples(ex_a), _mask_examples(ex_b)
+
+
+def _mask_examples(values: List[str]) -> List[str]:
+    if not settings.regulated_mode:
+        return values
+    import re
+    masked = []
+    for v in values:
+        # email
+        if re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", v or ""):
+            masked.append(re.sub(r"([A-Za-z0-9._%+-]).*@.*", r"\1***@***.com", v))
+            continue
+        # phone keep last 4
+        m = re.search(r"(\d{4})$", re.sub(r"\D", "", v or ""))
+        if m and len(re.sub(r"\D", "", v)) >= 7:
+            masked.append(f"***-***-{m.group(1)}")
+            continue
+        # IBAN last4
+        if re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{1,30}", v or "", flags=re.I):
+            masked.append("****" + (v[-4:] if len(v) >= 4 else v))
+            continue
+        masked.append((v or "")[:12])
+    return masked
 
 
 def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: int = 1000) -> List[Dict]:

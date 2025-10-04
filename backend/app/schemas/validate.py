@@ -20,5 +20,7 @@ class ValidateResponse(BaseModel):
     status: Literal["pass", "fail"]
     violations: List[ValidationViolation]
     summary: ValidateSummary
+    gate_blocked: bool | None = None
+    run_id: str | None = None
 
 
