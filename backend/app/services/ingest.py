@@ -24,8 +24,10 @@ def load_table(content: bytes, filename: str) -> pd.DataFrame:
     name = (filename or "").lower()
     if name.endswith((".csv", ".tsv")):
         text = _decode_bytes_utf8_fallback(content)
-        # Let pandas infer delimiter
-        return pd.read_csv(io.StringIO(text), sep=None, engine="python")
+        # Use comma/tsv explicit separators to avoid over-splitting on short samples
+        if name.endswith((".tsv",)):
+            return pd.read_csv(io.StringIO(text), sep="\t")
+        return pd.read_csv(io.StringIO(text))
     if name.endswith((".json", ".ndjson")):
         text = _decode_bytes_utf8_fallback(content)
         # Try records/lines first
@@ -50,7 +52,7 @@ def load_table(content: bytes, filename: str) -> pd.DataFrame:
     # Unknown: attempt CSV as default
     text = _decode_bytes_utf8_fallback(content)
     try:
-        return pd.read_csv(io.StringIO(text), sep=None, engine="python")
+        return pd.read_csv(io.StringIO(text))
     except Exception:
         return pd.DataFrame()
 
