@@ -58,12 +58,12 @@ def _apply_string_op_all(out: pd.DataFrame, func_name: str, field: str | None) -
     if field:
         if field not in out.columns:
             raise TransformError(f"field not found: {field}")
-        out[field] = out[field].astype(str).str.__getattr__(func_name)()
+        out[field] = getattr(out[field].astype(str).str, func_name)()
         return out
     # apply to all object columns
     for c in out.columns:
         if pd.api.types.is_object_dtype(out[c]) or pd.api.types.is_string_dtype(out[c]):
-            out[c] = out[c].astype(str).str.__getattr__(func_name)()
+            out[c] = getattr(out[c].astype(str).str, func_name)()
     return out
 
 
@@ -115,9 +115,15 @@ def apply_ops(df: pd.DataFrame, ops: List[TransformOp]) -> pd.DataFrame:
             if col not in out.columns:
                 raise TransformError("regex_extract.field missing/invalid")
             pattern = args.get("pattern")
-            group = int(args.get("group", 0))
+            group = int(args.get("group", 1))
             target = args.get("target") or f"{col}_re{group}"
-            out[target] = out[col].astype(str).str.extract(re.compile(pattern), expand=False).astype(str).str.strip()
+            extr = out[col].astype(str).str.extract(re.compile(pattern))
+            if isinstance(extr, pd.DataFrame):
+                gi = max(1, group) - 1
+                series = extr.iloc[:, gi]
+            else:
+                series = extr
+            out[target] = series.astype(str).str.strip()
         elif name == "map_values":
             col = args.get("field")
             if col not in out.columns:
