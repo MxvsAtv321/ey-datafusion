@@ -22,3 +22,38 @@ jobs:
         run: |
           pytest -q
 
+  placeholder_scan:
+    runs-on: ubuntu-latest
+    needs: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Run placeholder/secret scan
+        run: |
+          python scripts/scan_placeholders.py
+
+  frontend:
+    runs-on: ubuntu-latest
+    needs: backend
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: npm ci --silent
+      - name: Build (prod, no mocks)
+        env:
+          VITE_MOCK: '0'
+        run: npm run build --silent
+      - name: Ensure no MSW in prod bundle
+        run: |
+          if grep -R "mocks/browser\|mockServiceWorker" dist; then
+            echo "MSW artifacts found in production bundle"; exit 1;
+          fi
+
