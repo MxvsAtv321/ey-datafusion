@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Upload, FileText, X, CheckCircle } from "lucide-react";
+import { Upload, FileText, X, CheckCircle, FileSpreadsheet, FileJson, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -26,6 +26,52 @@ export default function UploadPage() {
     setCurrentStep 
   } = useStore();
   const navigate = useNavigate();
+
+  // Helper function to get file icon and color based on file type
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+      case 'csv':
+        return { 
+          icon: FileText, 
+          color: 'text-green-600',
+          bgColor: 'bg-green-50',
+          borderColor: 'border-green-200'
+        };
+      case 'xlsx':
+      case 'xls':
+        return { 
+          icon: FileSpreadsheet, 
+          color: 'text-blue-600',
+          bgColor: 'bg-blue-50',
+          borderColor: 'border-blue-200'
+        };
+      case 'json':
+        return { 
+          icon: FileJson, 
+          color: 'text-yellow-600',
+          bgColor: 'bg-yellow-50',
+          borderColor: 'border-yellow-200'
+        };
+      default:
+        return { 
+          icon: File, 
+          color: 'text-gray-600',
+          bgColor: 'bg-gray-50',
+          borderColor: 'border-gray-200'
+        };
+    }
+  };
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -186,30 +232,40 @@ export default function UploadPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {bank1Files.map((file, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between rounded-md border p-3"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <FileText className="h-5 w-5 flex-shrink-0 text-primary" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {(file.size / 1024).toFixed(1)} KB
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeBank1File(idx)}
-                        aria-label={`Remove ${file.name}`}
+                  {bank1Files.map((file, idx) => {
+                    const fileIcon = getFileIcon(file.name);
+                    const IconComponent = fileIcon.icon;
+                    
+                    return (
+                      <li
+                        key={idx}
+                        className={`flex items-center justify-between rounded-lg border p-3 transition-colors hover:shadow-sm ${fileIcon.bgColor} ${fileIcon.borderColor}`}
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`p-2 rounded-md ${fileIcon.bgColor} ${fileIcon.borderColor} border`}>
+                            <IconComponent className={`h-5 w-5 ${fileIcon.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate text-gray-900">{file.name}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="font-medium">{formatFileSize(file.size)}</span>
+                              <span>•</span>
+                              <span className="capitalize">{file.name.split('.').pop()?.toUpperCase()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeBank1File(idx)}
+                          aria-label={`Remove ${file.name}`}
+                          className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </CardContent>
             </Card>
@@ -287,30 +343,40 @@ export default function UploadPage() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {bank2Files.map((file, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between rounded-md border p-3"
-                    >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <FileText className="h-5 w-5 flex-shrink-0 text-primary" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {(file.size / 1024).toFixed(1)} KB
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeBank2File(idx)}
-                        aria-label={`Remove ${file.name}`}
+                  {bank2Files.map((file, idx) => {
+                    const fileIcon = getFileIcon(file.name);
+                    const IconComponent = fileIcon.icon;
+                    
+                    return (
+                      <li
+                        key={idx}
+                        className={`flex items-center justify-between rounded-lg border p-3 transition-colors hover:shadow-sm ${fileIcon.bgColor} ${fileIcon.borderColor}`}
                       >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className={`p-2 rounded-md ${fileIcon.bgColor} ${fileIcon.borderColor} border`}>
+                            <IconComponent className={`h-5 w-5 ${fileIcon.color}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate text-gray-900">{file.name}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span className="font-medium">{formatFileSize(file.size)}</span>
+                              <span>•</span>
+                              <span className="capitalize">{file.name.split('.').pop()?.toUpperCase()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeBank2File(idx)}
+                          aria-label={`Remove ${file.name}`}
+                          className="h-8 w-8 hover:bg-red-50 hover:text-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </li>
+                    );
+                  })}
                 </ul>
               </CardContent>
             </Card>
