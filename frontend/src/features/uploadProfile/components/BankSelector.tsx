@@ -53,8 +53,14 @@ export const BankSelector = ({
               <span>Bank A</span>
             </Button>
             
-            <div className="relative">
-              <div className="w-12 h-6 bg-gray-200 rounded-full p-1 transition-colors duration-200">
+            <div 
+              className="relative cursor-pointer"
+              onClick={() => onBankChange(selectedBank === "bankA" ? "bankB" : "bankA")}
+            >
+              <div className={cn(
+                "w-12 h-6 rounded-full p-1 transition-colors duration-200",
+                selectedBank === "bankA" ? "bg-gray-200" : "bg-blue-500"
+              )}>
                 <div 
                   className={cn(
                     "w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200",
