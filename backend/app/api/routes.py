@@ -8,6 +8,8 @@ from ..schemas.profile import ProfileResponse
 from ..services.match import suggest_mappings
 from ..schemas.match import MatchResponse, CandidateMapping
 from fastapi import HTTPException
+from ..services.merge import merge_datasets
+from ..schemas.merge import MappingDecision
 
 
 router = APIRouter()
@@ -48,7 +50,22 @@ async def match(files: List[UploadFile] = File(...)):
 
 @router.post("/merge", dependencies=[Depends(require_api_key)])
 async def merge(files: List[UploadFile] = File(...), decisions: dict = Body(default={})):  # type: ignore[assignment]
-    return {"columns": [], "preview_rows": []}
+    if len(files) != 2:
+        raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
+    dfs = []
+    for f in files:
+        content = await f.read()
+        df = load_table(content, f.filename)
+        df = normalize_headers(df)
+        dfs.append(df)
+    left_df, right_df = dfs
+    try:
+        decisions_models = [MappingDecision.model_validate(d) for d in decisions or []]
+    except Exception:
+        decisions_models = []
+    merged = merge_datasets({"left": left_df, "right": right_df}, decisions_models, lineage_meta={})
+    preview = merged.head(50)
+    return {"columns": list(preview.columns), "preview_rows": preview.to_dict(orient="records")}
 
 
 @router.post("/validate", dependencies=[Depends(require_api_key)])
