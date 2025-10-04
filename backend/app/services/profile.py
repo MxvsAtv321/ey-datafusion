@@ -9,6 +9,7 @@ from typing import List
 import pandas as pd  # type: ignore
 
 from ..schemas.profile import ColumnProfile, TableProfile
+from ._masking import mask_examples
 
 
 def dtype_to_simple(pd_dtype) -> str:
@@ -63,6 +64,10 @@ def profile_table(df: pd.DataFrame, table_name: str, sample_n: int) -> TableProf
         unique_count = int(s.nunique(dropna=True))
         cand_pk = unique_count >= min(len(df_sample), sample_n) * 0.99 and nulls == 0
         examples = _safe_examples(s, 3)
+        # Import settings at call time to honor env changes in tests
+        from app.core.config import settings as cfg_settings
+        if cfg_settings.profile_examples_masked:
+            examples = mask_examples(examples)
         semantic = infer_semantic_tags(s)
         columns.append(
             ColumnProfile(
