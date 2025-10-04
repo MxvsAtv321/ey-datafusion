@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { StepperNav } from "@/components/StepperNav";
+import ProfilePage from "./pages/ProfilePage";
 import MappingPage from "./pages/MappingPage";
 import MergePage from "./pages/MergePage";
 import ExportPage from "./pages/ExportPage";
@@ -27,6 +28,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<UploadProfilePage />} />
                 <Route path="/upload-profile" element={<UploadProfilePage />} />
+                <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/mapping" element={<MappingPage />} />
                 <Route path="/merge" element={<MergePage />} />
                 <Route path="/export" element={<ExportPage />} />

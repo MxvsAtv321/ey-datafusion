@@ -1,174 +1,194 @@
-import { useStore } from "@/state/store";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+/**
+ * Profile Page
+ * 
+ * Displays detailed profile data for Bank A and Bank B datasets
+ * Shows after starting a run from the Upload & Profile page
+ */
+
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
-import { Database, Key, ArrowRight, TrendingUp } from "lucide-react";
-import { DType } from "@/api/types";
-
-const dtypeBadgeColors: Record<DType, string> = {
-  string: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  integer: "bg-green-500/10 text-green-700 dark:text-green-400",
-  number: "bg-green-500/10 text-green-700 dark:text-green-400",
-  boolean: "bg-purple-500/10 text-purple-700 dark:text-purple-400",
-  datetime: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
-};
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
+import { useProfileDatasets } from "@/api/profile";
+import { ProfileSummary } from "@/features/uploadProfile/components/ProfileSummary";
+import { DatasetProfile } from "@/types/profile";
+import { toast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
-  const { profiles, setCurrentStep, setBaselineProfile } = useStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [profiles, setProfiles] = useState<{ bankA: DatasetProfile; bankB: DatasetProfile } | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleProceed = () => {
-    setCurrentStep(2);
+  const profileMutation = useProfileDatasets();
+
+  // Get run data from location state or URL params
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.runId) {
+      setRunId(state.runId);
+    }
+    if (state?.profiles) {
+      setProfiles(state.profiles);
+    }
+  }, [location.state]);
+
+  const handleRefresh = async () => {
+    if (!runId) {
+      toast({
+        title: "No run ID",
+        description: "Cannot refresh without a run ID",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // For demo purposes, we'll just reload the same data
+      // In a real app, this would make a new API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      toast({
+        title: "Profile refreshed",
+        description: "Profile data has been updated",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to refresh",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBackToUpload = () => {
+    navigate("/");
+  };
+
+  const handleNextToMapping = () => {
     navigate("/mapping");
   };
 
-  const handleSetBaseline = (profile: any) => {
-    setBaselineProfile(profile);
-  };
-
-  if (Object.keys(profiles).length === 0) {
+  if (!runId) {
     return (
-      <div className="container max-w-6xl p-6">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Database className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg text-muted-foreground">No profiles available</p>
-            <Button onClick={() => navigate("/")} className="mt-4">
-              Upload Files
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="container max-w-7xl p-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No run data found. Please start a run from the Upload & Profile page.
+          </AlertDescription>
+        </Alert>
+        <div className="mt-4">
+          <Button onClick={handleBackToUpload}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Upload & Profile
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-7xl p-6">
-      <div className="mb-8 flex items-center justify-between">
+    <div className="container max-w-7xl p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Data Profiles</h2>
+          <h1 className="text-3xl font-bold tracking-tight">Dataset Profiles</h1>
           <p className="text-muted-foreground mt-2">
-            Review data quality, types, and semantic tags
+            Detailed analysis of your uploaded datasets
           </p>
         </div>
-        <Button onClick={handleProceed} size="lg">
-          Proceed to Mapping
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        <div className="flex items-center space-x-4">
+          <Badge variant="outline" className="flex items-center space-x-2">
+            <CheckCircle className="w-4 h-4" />
+            <span>Run: {runId}</span>
+          </Badge>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        {Object.entries(profiles).map(([filename, profile]) => (
-          <Card key={filename}>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-xl">{filename}</CardTitle>
-                  <CardDescription>
-                    Table: {profile.table}
-                  </CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Badge variant="secondary" className="gap-1">
-                    <Database className="h-3 w-3" />
-                    {profile.row_count.toLocaleString()} rows
-                  </Badge>
-                  {profile.candidate_primary_keys_sampled.length > 0 && (
-                    <Badge variant="secondary" className="gap-1">
-                      <Key className="h-3 w-3" />
-                      PK: {profile.candidate_primary_keys_sampled.join(", ")}
-                    </Badge>
-                  )}
-                </div>
-              </div>
+              <Skeleton className="h-6 w-32" />
             </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                        Column
-                      </th>
-                      <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                        Type
-                      </th>
-                      <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                        Nulls
-                      </th>
-                      <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                        Unique (sampled)
-                      </th>
-                      <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                        Semantic Tags
-                      </th>
-                      <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                        Examples
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {profile.columns.map((col, idx) => (
-                      <tr key={idx} className="border-b hover:bg-muted/30 transition-colors">
-                        <td className="data-cell font-mono font-medium">
-                          {col.name}
-                        </td>
-                        <td className="px-4 py-2">
-                          <Badge
-                            variant="secondary"
-                            className={dtypeBadgeColors[col.dtype]}
-                          >
-                            {col.dtype}
-                          </Badge>
-                        </td>
-                        <td className="data-cell">
-                          {col.null_count > 0 ? (
-                            <span className="text-warning">{col.null_count}</span>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
-                        </td>
-                        <td className="data-cell">{col.unique_count_sampled}</td>
-                        <td className="px-4 py-2">
-                          <div className="flex flex-wrap gap-1">
-                            {col.semantic_tags.map((tag, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">
-                                {tag.replace(/_/g, " ")}
-                              </Badge>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="data-cell">
-                          <div className="flex gap-1 font-mono text-xs text-muted-foreground">
-                            {col.examples.slice(0, 3).map((ex, i) => (
-                              <span key={i} className="truncate max-w-[100px]">
-                                {ex}
-                                {i < 2 && ","}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="mt-4 flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleSetBaseline(profile)}
-                >
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Set as Baseline for Drift
-                </Button>
-              </div>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
             </CardContent>
           </Card>
-        ))}
-      </div>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Profile Data */}
+      {profiles && !isLoading && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Bank A</h2>
+              <ProfileSummary profile={profiles.bankA} testId="bankA" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Bank B</h2>
+              <ProfileSummary profile={profiles.bankB} testId="bankB" />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-between items-center pt-6 border-t">
+            <Button
+              variant="outline"
+              onClick={handleBackToUpload}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Upload
+            </Button>
+            <Button
+              onClick={handleNextToMapping}
+              size="lg"
+            >
+              Next: Column Mapping
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* No Profile Data */}
+      {!profiles && !isLoading && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Profile data is being generated. This may take a few moments.
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }

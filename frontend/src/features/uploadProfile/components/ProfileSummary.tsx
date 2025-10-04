@@ -21,11 +21,13 @@ export const ProfileSummary = ({ profile, testId }: ProfileSummaryProps) => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Database className="w-4 h-4 text-blue-500" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Rows Sampled</p>
-                <p className="text-lg font-bold">{profile.rowCountSampled.toLocaleString()}</p>
+            <div className="flex items-center space-x-2 min-w-0">
+              <Database className="w-4 h-4 text-blue-500 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 truncate">Rows Sampled</p>
+                <p className="text-lg font-bold truncate" title={profile.rowCountSampled.toLocaleString()}>
+                  {profile.rowCountSampled.toLocaleString()}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -33,11 +35,13 @@ export const ProfileSummary = ({ profile, testId }: ProfileSummaryProps) => {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <Columns className="w-4 h-4 text-green-500" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">Columns</p>
-                <p className="text-lg font-bold">{totalColumns}</p>
+            <div className="flex items-center space-x-2 min-w-0">
+              <Columns className="w-4 h-4 text-green-500 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 truncate">Columns</p>
+                <p className="text-lg font-bold truncate" title={totalColumns.toString()}>
+                  {totalColumns}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -45,11 +49,13 @@ export const ProfileSummary = ({ profile, testId }: ProfileSummaryProps) => {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4 text-orange-500" />
-              <div>
-                <p className="text-sm font-medium text-gray-600">High Blanks</p>
-                <p className="text-lg font-bold text-orange-600">{highBlanksCount}</p>
+            <div className="flex items-center space-x-2 min-w-0">
+              <AlertTriangle className="w-4 h-4 text-orange-500 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 truncate">High Blanks</p>
+                <p className="text-lg font-bold text-orange-600 truncate" title={highBlanksCount.toString()}>
+                  {highBlanksCount}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -57,13 +63,15 @@ export const ProfileSummary = ({ profile, testId }: ProfileSummaryProps) => {
 
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center">
+            <div className="flex items-center space-x-2 min-w-0">
+              <div className="w-4 h-4 rounded-full bg-purple-500 flex items-center justify-center flex-shrink-0">
                 <span className="text-xs text-white font-bold">K</span>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">Likely Keys</p>
-                <p className="text-lg font-bold">{profile.likelyKeys.length}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-gray-600 truncate">Likely Keys</p>
+                <p className="text-lg font-bold truncate" title={profile.likelyKeys.length.toString()}>
+                  {profile.likelyKeys.length}
+                </p>
               </div>
             </div>
           </CardContent>

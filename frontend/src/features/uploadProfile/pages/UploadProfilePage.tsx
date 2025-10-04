@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,17 +23,16 @@ import { Copy, CheckCircle, AlertCircle, Play } from "lucide-react";
 import { useStartRun } from "@/api/run";
 import { useProfileDatasets } from "@/api/profile";
 import { FilePicker } from "../components/FilePicker";
-import { ProfileSummary } from "../components/ProfileSummary";
 import { DatasetProfile } from "@/types/profile";
 import { secureMode } from "@/config/app";
 import { toast } from "@/hooks/use-toast";
 
 export const UploadProfilePage = () => {
+  const navigate = useNavigate();
   const [bankAFiles, setBankAFiles] = useState<File[]>([]);
   const [bankBFiles, setBankBFiles] = useState<File[]>([]);
   const [actionKey, setActionKey] = useState("");
   const [runId, setRunId] = useState<string | null>(null);
-  const [profiles, setProfiles] = useState<{ bankA: DatasetProfile; bankB: DatasetProfile } | null>(null);
   const [copied, setCopied] = useState(false);
 
   const startRunMutation = useStartRun();
@@ -76,11 +76,20 @@ export const UploadProfilePage = () => {
       });
       
       console.log("Profile data received:", profileData);
-      setProfiles(profileData);
       
       toast({
         title: "Run started successfully",
         description: `Run ${runInfo.runId} is now profiling your datasets (${bankAFiles.length} + ${bankBFiles.length} files)`,
+      });
+
+      // Navigate to profile page with data
+      navigate("/profile", {
+        state: {
+          runId: runInfo.runId,
+          profiles: profileData,
+          bankAFiles,
+          bankBFiles,
+        },
       });
     } catch (error) {
       console.error("Error starting run:", error);
@@ -232,29 +241,13 @@ export const UploadProfilePage = () => {
         </Card>
       )}
 
-      {/* Profiles Section */}
+      {/* Loading State */}
       {profileMutation.isPending && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardContent>
-          </Card>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center space-y-4">
+            <div className="w-8 h-8 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="text-muted-foreground">Generating profiles...</p>
+          </div>
         </div>
       )}
 
@@ -265,22 +258,6 @@ export const UploadProfilePage = () => {
             Failed to generate profiles. Please try again.
           </AlertDescription>
         </Alert>
-      )}
-
-      {profiles && (
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold">Dataset Profiles</h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Bank A</h3>
-              <ProfileSummary profile={profiles.bankA} testId="bankA" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Bank B</h3>
-              <ProfileSummary profile={profiles.bankB} testId="bankB" />
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
