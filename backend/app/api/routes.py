@@ -131,8 +131,9 @@ async def docs(request: Request, payload: dict = Body(...)):
     manifest = payload.get("mapping", {})
     run_id = payload.get("run_id", "")
     threshold = float(payload.get("threshold", settings.match_auto_threshold))
-    # compute manifest hash
+    # compute markdown and manifest hash
     import hashlib, json as pyjson
+    md, js = generate_docs(manifest, run_id, threshold)
     normalized = pyjson.dumps(manifest, sort_keys=True)
     mh = f"sha256:{hashlib.sha256(normalized.encode('utf-8')).hexdigest()}"
     save_manifest(run_id, threshold, normalized, mh)
