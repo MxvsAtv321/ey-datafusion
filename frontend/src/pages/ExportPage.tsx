@@ -10,10 +10,11 @@ import ReactMarkdown from "react-markdown";
 import SchemaDiff from "@/components/advanced/SchemaDiff";
 
 export default function ExportPage() {
-  const { decisions, manifest, setManifest, settings, baselineProfile, profiles } = useStore();
+  const { decisions, manifest, setManifest, settings, baselineProfile, profiles, violations } = useStore();
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [driftData, setDriftData] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const gateBlocked = violations?.gate_blocked === true;
 
   const handleGenerateDocs = async () => {
     const manifestData = {
@@ -100,10 +101,17 @@ export default function ExportPage() {
         </p>
       </div>
 
+      {gateBlocked && (
+        <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900 mb-4">
+          <div className="font-medium">Export blocked by validation gates</div>
+          <div className="text-sm">Resolve required rules before exporting.</div>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-3 mb-6">
         <Button
           onClick={handleGenerateDocs}
-          disabled={isLoadingDocs || decisions.length === 0}
+          disabled={isLoadingDocs || decisions.length === 0 || gateBlocked}
           size="lg"
           className="h-auto py-6"
         >

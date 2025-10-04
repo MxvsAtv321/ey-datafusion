@@ -13,6 +13,7 @@ import {
 import { Switch } from "./ui/switch";
 import { Label } from "./ui/label";
 import { Slider } from "./ui/slider";
+import { SecureBadge } from "./Header/SecureBadge";
 
 export const AppHeader = () => {
   const { settings, toggleDarkMode, toggleDemoMode, setThreshold } = useStore();
@@ -35,7 +36,8 @@ export const AppHeader = () => {
           <h1 className="text-lg font-semibold">DataFusion</h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <SecureBadge />
           <Button
             variant="ghost"
             size="icon"

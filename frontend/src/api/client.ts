@@ -14,6 +14,10 @@ const client = axios.create({
 });
 
 export const api = {
+  getHealth: async (): Promise<{ service:string; version:string; regulated_mode:boolean; embeddings_enabled:boolean; masking_policy?: { match_explain:boolean; profile_examples_masked:boolean } } > => {
+    const { data } = await client.get("/healthz");
+    return data;
+  },
   profile: async (files: File[]): Promise<ProfileResponse> => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
@@ -26,7 +30,7 @@ export const api = {
   match: async (files: File[], opts?: { threshold?: number }): Promise<MatchResponse> => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
-    const url = typeof opts?.threshold === "number" ? `/match?threshold=${opts.threshold}` : "/match`".replace("`"," ");
+    const url = typeof opts?.threshold === "number" ? `/match?threshold=${opts.threshold}` : "/match";
     const response = await client.post(url, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });

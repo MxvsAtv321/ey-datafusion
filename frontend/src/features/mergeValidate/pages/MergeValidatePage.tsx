@@ -6,8 +6,7 @@ import { useMergePreview, ApprovedMapping } from '@/api/merge';
 import { MergedPreviewTable } from '../components/MergedPreviewTable';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { secureMode } from '@/config/app';
-import { ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 /**
  * Merge & Validate Page
@@ -74,24 +73,6 @@ export const MergeValidatePage: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge 
-              variant={secureMode ? "default" : "secondary"}
-              className="flex items-center space-x-2"
-              data-testid="secure-badge"
-              aria-live="polite"
-            >
-              {secureMode ? (
-                <>
-                  <CheckCircle className="w-4 h-4" />
-                  <span>Secure Mode: ON</span>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Secure Mode: OFF</span>
-                </>
-              )}
-            </Badge>
             <Button
               onClick={() => navigate('/docs')}
               data-testid="btn-continue-docs"

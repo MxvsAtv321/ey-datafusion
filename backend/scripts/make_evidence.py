@@ -1,4 +1,64 @@
 #!/usr/bin/env python3
+import argparse, json, os, pathlib, urllib.request, zipfile, datetime
+
+
+def fetch_json(url: str):
+    with urllib.request.urlopen(url) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def download(url: str, dest: pathlib.Path):
+    with urllib.request.urlopen(url) as r, open(dest, "wb") as f:
+        f.write(r.read())
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--run-id", required=True)
+    p.add_argument("--base", default=os.environ.get("BASE", "http://localhost:8000"))
+    args = p.parse_args()
+
+    base = args.base.rstrip("/")
+    run = fetch_json(f"{base}/api/v1/runs/{args.run_id}")
+
+    out_dir = pathlib.Path("deliverables") / args.run_id
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    (out_dir / "run.json").write_text(json.dumps(run, indent=2), encoding="utf-8")
+
+    arts = run.get("artifacts", [])
+    for a in arts:
+        name = a.get("name", "artifact.bin")
+        url = a.get("url")
+        if not url:
+            continue
+        dest = out_dir / name
+        try:
+            download(url, dest)
+        except Exception as e:
+            (out_dir / f"{name}.error.txt").write_text(str(e), encoding="utf-8")
+
+    tm = f"""# THREAT_MODEL
+
+Generated: {datetime.datetime.utcnow().isoformat()}Z
+- Regulated Mode: backend masks examples, embeddings disabled, API-key required (if set), strict CORS
+- Logs: PII redaction formatter enabled
+- Artifacts: presigned URLs with TTL; SHA256 recorded in run ledger
+- Reproducibility: manifest_hash present in docs response; input hashes stored in run
+"""
+    (out_dir / "THREAT_MODEL.md").write_text(tm, encoding="utf-8")
+
+    zip_path = pathlib.Path("deliverables") / f"{args.run_id}.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
+        for pth in out_dir.rglob("*"):
+            z.write(pth, pth.relative_to("deliverables"))
+    print(f"Evidence ZIP written to {zip_path}")
+
+
+if __name__ == "__main__":
+    main()
+
+#!/usr/bin/env python3
 from __future__ import annotations
 
 import argparse

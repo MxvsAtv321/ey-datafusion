@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { api } from "@/api/client";
+import { useStore } from "@/state/store";
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,10 +14,16 @@ import { ThresholdSlider } from '../components/ThresholdSlider';
 import { ImpactMeter, calculateThresholdStats } from '../components/ImpactMeter';
 import { SuggestedMappingsTable } from '../components/SuggestedMappingsTable';
 
+const DEBOUNCE_MS = 250;
+
 export const SuggestMappingsPage: React.FC = () => {
   const navigate = useNavigate();
+  const { files, setCandidates } = useStore();
   const [threshold, setThreshold] = useState(0.70);
   const [decisions, setDecisions] = useState<Map<string, MappingDecision>>(new Map());
+  const [stats, setStats] = useState<{ auto_pct:number; estimated_minutes_saved:number } | undefined>(undefined);
+  const [loading, setLoading] = useState(false);
+  const debounceTimer = useRef<number | undefined>(undefined);
 
   // Get runId from navigation state or global store
   const runId = 'RUN-20251004-1015-9f3a';
@@ -36,12 +44,34 @@ export const SuggestMappingsPage: React.FC = () => {
     }
   }, [suggestData?.candidates]);
 
-  const thresholdStats: ThresholdStats = useMemo(() => {
-    if (!suggestData?.candidates) {
-      return { threshold, autoCount: 0, reviewCount: 0, total: 0, autoPct: 0, estMinutesSaved: 0 };
+  const thresholdStats: ThresholdStats = useMemo(() => ({
+    threshold,
+    autoCount: 0,
+    reviewCount: 0,
+    total: 0,
+    autoPct: stats ? stats.auto_pct : 0,
+    estMinutesSaved: stats ? stats.estimated_minutes_saved : 0,
+  }), [threshold, stats]);
+
+  const fetchMatches = async (t: number) => {
+    if (!files || files.length === 0) return;
+    setLoading(true);
+    try {
+      const res = await api.match(files, { threshold: t });
+      setThreshold(res.threshold ?? t);
+      setCandidates(res.candidates);
+      if (res.stats) setStats({ auto_pct: res.stats.auto_pct as number, estimated_minutes_saved: res.stats.estimated_minutes_saved as number });
+    } finally {
+      setLoading(false);
     }
-    return calculateThresholdStats(suggestData.candidates, threshold);
-  }, [suggestData?.candidates, threshold]);
+  };
+
+  const onThresholdChange = (t: number) => {
+    setThreshold(t);
+    if (debounceTimer.current) window.clearTimeout(debounceTimer.current);
+    // @ts-ignore
+    debounceTimer.current = window.setTimeout(() => fetchMatches(t), DEBOUNCE_MS);
+  };
 
   const handleDecisionChange = (candidateId: string, decision: MappingDecision) => {
     setDecisions(prev => new Map(prev.set(candidateId, decision)));
@@ -137,7 +167,7 @@ export const SuggestMappingsPage: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            <ThresholdSlider value={threshold} onChange={setThreshold} />
+            <ThresholdSlider value={threshold} onChange={onThresholdChange} />
             <ImpactMeter stats={thresholdStats} />
             <div className="flex space-x-2">
               <Button variant="outline" onClick={handleSelectAllAboveThreshold} data-testid="btn-select-above-threshold">Select all above threshold</Button>
