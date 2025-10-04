@@ -2,10 +2,12 @@ from fastapi import APIRouter, Depends, UploadFile, File, Body
 from typing import Dict, List
 from ..core.security import require_api_key
 from ..core.config import settings
-from ..core.config import settings
 from ..services.ingest import load_table, normalize_headers
 from ..services.profile import profile_table
 from ..schemas.profile import ProfileResponse
+from ..services.match import suggest_mappings
+from ..schemas.match import MatchResponse, CandidateMapping
+from fastapi import HTTPException
 
 
 router = APIRouter()
@@ -29,9 +31,19 @@ async def profile(files: List[UploadFile] = File(...)):
     return {"profiles": profiles}
 
 
-@router.post("/match", dependencies=[Depends(require_api_key)])
+@router.post("/match", response_model=MatchResponse, dependencies=[Depends(require_api_key)])
 async def match(files: List[UploadFile] = File(...)):
-    return {"candidates": []}
+    if len(files) != 2:
+        raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
+    dfs = []
+    for f in files:
+        content = await f.read()
+        df = load_table(content, f.filename)
+        df = normalize_headers(df)
+        dfs.append(df)
+    left_df, right_df = dfs
+    candidates = suggest_mappings(left_df, right_df, sample_n=settings.sample_n)
+    return MatchResponse(candidates=[CandidateMapping.model_validate(c) for c in candidates])
 
 
 @router.post("/merge", dependencies=[Depends(require_api_key)])
