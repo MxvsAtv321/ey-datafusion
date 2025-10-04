@@ -9,6 +9,10 @@ class Settings:
 
     # Security
     api_key: str | None = os.getenv("API_KEY")
+    regulated_mode: bool = os.getenv("REGULATED_MODE", "true").lower() in {"1", "true", "yes"}
+    disable_openapi: bool = os.getenv("DISABLE_OPENAPI", "false").lower() in {"1", "true", "yes"}
+    allowed_origins: list[str] = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+    required_rules: list[str] = [r.strip() for r in os.getenv("REQUIRED_RULES", "").split(",") if r.strip()]
 
     # DB
     db_dsn: str | None = os.getenv("DB_DSN")

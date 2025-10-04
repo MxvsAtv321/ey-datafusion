@@ -24,6 +24,8 @@ class Run(Base):
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     artifacts_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    input_files_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    manifest_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
 
 
 class Manifest(Base):
@@ -31,6 +33,9 @@ class Manifest(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(64), index=True)
     content_json: Mapped[str] = mapped_column(Text)
+    threshold: Mapped[Optional[float]] = mapped_column(Integer, nullable=True)
+    manifest_hash: Mapped[Optional[str]] = mapped_column(String(128), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 class Template(Base):
@@ -97,6 +102,42 @@ def get_run(run_id: str) -> Optional[Dict[str, Any]]:
             "started_at": r.started_at.isoformat() if r.started_at else None,
             "completed_at": r.completed_at.isoformat() if r.completed_at else None,
             "artifacts": artifacts,
+            "input_files": json.loads(r.input_files_json) if r.input_files_json else [],
+            "manifest_hash": r.manifest_hash,
         }
+
+
+def add_input_files(run_id: Optional[str], files: List[Dict[str, Any]]) -> None:
+    if not run_id:
+        return
+    with get_session() as s:
+        r: Optional[Run] = s.query(Run).filter(Run.run_id == run_id).one_or_none()
+        if r is None:
+            return
+        existing = json.loads(r.input_files_json) if r.input_files_json else []
+        r.input_files_json = json.dumps(existing + files)
+
+
+def save_manifest(run_id: Optional[str], threshold: Optional[float], manifest_json: str, manifest_hash: str) -> None:
+    if not run_id:
+        return
+    with get_session() as s:
+        m = Manifest(run_id=run_id, content_json=manifest_json, threshold=threshold, manifest_hash=manifest_hash)
+        s.add(m)
+        # also reflect hash on run
+        r: Optional[Run] = s.query(Run).filter(Run.run_id == run_id).one_or_none()
+        if r is not None:
+            r.manifest_hash = manifest_hash
+
+
+def add_artifacts(run_id: Optional[str], artifacts: List[Dict[str, Any]]) -> None:
+    if not run_id:
+        return
+    with get_session() as s:
+        r: Optional[Run] = s.query(Run).filter(Run.run_id == run_id).one_or_none()
+        if r is None:
+            return
+        existing = json.loads(r.artifacts_json) if r.artifacts_json else []
+        r.artifacts_json = json.dumps(existing + artifacts)
 
 

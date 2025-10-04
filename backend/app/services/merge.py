@@ -70,3 +70,34 @@ def merge_datasets(
     return merged
 
 
+def er_lite_customers(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Deterministic, opt-in deduping for customers. Blocks on email or customer_id.
+    Prefers left-bank rows by sorting _source_bank ascending (left before right),
+    then keeps first non-null per column per key.
+    """
+    key = None
+    for k in ("email", "customer_id"):
+        if k in df.columns:
+            key = k
+            break
+    if key is None:
+        return df, {"clusters": 0, "merged_rows": 0}
+    before = len(df)
+    # sort so that left rows appear first; then groupby keeps first non-null values
+    sort_cols = ["_source_bank"] if "_source_bank" in df.columns else []
+    work = df.copy()
+    if sort_cols:
+        work["_source_bank_sort"] = work["_source_bank"].map({"left": 0, "right": 1}).fillna(2)
+        sort_cols = ["_source_bank_sort"]
+    work = work.sort_values(sort_cols) if sort_cols else work
+    agg: dict[str, str] = {}
+    for c in work.columns:
+        agg[c] = "first"
+    dedup = work.groupby(key, dropna=False, as_index=False).agg(agg)
+    if "_source_bank_sort" in dedup.columns:
+        dedup = dedup.drop(columns=["_source_bank_sort"])
+    merged_rows = before - len(dedup)
+    clusters = dedup[key].nunique(dropna=False)
+    return dedup, {"clusters": int(clusters), "merged_rows": int(merged_rows)}
+
+
