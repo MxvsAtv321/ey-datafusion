@@ -1,0 +1,122 @@
+{
+  "datasetId": "bankA",
+  "fileHash": "a1b2c3d4",
+  "rowCountSampled": 200,
+  "columns": [
+    {
+      "name": "account_id",
+      "inferredType": "string",
+      "blanksPct": 0,
+      "exampleValues": ["ACC001", "ACC002", "ACC003", "ACC004", "ACC005"]
+    },
+    {
+      "name": "customer_email",
+      "inferredType": "string",
+      "blanksPct": 2.5,
+      "exampleValues": ["john.doe@example.com", "jane.smith@test.ca", "bob@company.org", "alice@demo.com", "charlie@bank.com"]
+    },
+    {
+      "name": "balance",
+      "inferredType": "number",
+      "blanksPct": 0,
+      "exampleValues": ["1250.50", "89234.12", "450.00", "15678.90", "234.56"]
+    },
+    {
+      "name": "open_date",
+      "inferredType": "date",
+      "blanksPct": 0,
+      "exampleValues": ["2021-03-15", "2022-07-22", "2020-11-05", "2023-01-10", "2021-12-31"]
+    },
+    {
+      "name": "account_type",
+      "inferredType": "string",
+      "blanksPct": 0,
+      "exampleValues": ["checking", "savings", "business", "premium", "basic"]
+    }
+  ],
+  "likelyKeys": [
+    {
+      "column": "account_id",
+      "score": 0.95,
+      "reason": "Unique values, no nulls, consistent format"
+    },
+    {
+      "column": "customer_email",
+      "score": 0.78,
+      "reason": "High uniqueness, email format validation"
+    }
+  ],
+  "sampleRows": [
+    {
+      "account_id": "ACC001",
+      "customer_email": "john.doe@example.com",
+      "balance": 1250.50,
+      "open_date": "2021-03-15",
+      "account_type": "checking"
+    },
+    {
+      "account_id": "ACC002",
+      "customer_email": "jane.smith@test.ca",
+      "balance": 89234.12,
+      "open_date": "2022-07-22",
+      "account_type": "savings"
+    },
+    {
+      "account_id": "ACC003",
+      "customer_email": "bob@company.org",
+      "balance": 450.00,
+      "open_date": "2020-11-05",
+      "account_type": "business"
+    },
+    {
+      "account_id": "ACC004",
+      "customer_email": "alice@demo.com",
+      "balance": 15678.90,
+      "open_date": "2023-01-10",
+      "account_type": "premium"
+    },
+    {
+      "account_id": "ACC005",
+      "customer_email": "charlie@bank.com",
+      "balance": 234.56,
+      "open_date": "2021-12-31",
+      "account_type": "basic"
+    },
+    {
+      "account_id": "ACC006",
+      "customer_email": "diana@example.org",
+      "balance": 5678.90,
+      "open_date": "2022-05-15",
+      "account_type": "checking"
+    },
+    {
+      "account_id": "ACC007",
+      "customer_email": "eve@test.com",
+      "balance": 12345.67,
+      "open_date": "2021-08-20",
+      "account_type": "savings"
+    },
+    {
+      "account_id": "ACC008",
+      "customer_email": "frank@company.ca",
+      "balance": 890.12,
+      "open_date": "2023-02-14",
+      "account_type": "business"
+    },
+    {
+      "account_id": "ACC009",
+      "customer_email": "grace@demo.org",
+      "balance": 23456.78,
+      "open_date": "2020-12-01",
+      "account_type": "premium"
+    },
+    {
+      "account_id": "ACC010",
+      "customer_email": "henry@bank.ca",
+      "balance": 345.67,
+      "open_date": "2022-09-30",
+      "account_type": "basic"
+    }
+  ]
+}
+

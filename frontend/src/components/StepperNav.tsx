@@ -4,11 +4,10 @@ import { Check, Upload, FileText, GitMerge, CheckCircle, FileDown } from "lucide
 import { useNavigate, useLocation } from "react-router-dom";
 
 const steps = [
-  { id: 0, name: "Upload", icon: Upload, path: "/" },
-  { id: 1, name: "Profile", icon: FileText, path: "/profile" },
-  { id: 2, name: "Mapping", icon: GitMerge, path: "/mapping" },
-  { id: 3, name: "Merge & Validate", icon: CheckCircle, path: "/merge" },
-  { id: 4, name: "Export", icon: FileDown, path: "/export" },
+  { id: 0, name: "Upload & Profile", icon: Upload, path: "/" },
+  { id: 1, name: "Mapping", icon: GitMerge, path: "/mapping" },
+  { id: 2, name: "Merge & Validate", icon: CheckCircle, path: "/merge" },
+  { id: 3, name: "Export", icon: FileDown, path: "/export" },
 ];
 
 export const StepperNav = () => {

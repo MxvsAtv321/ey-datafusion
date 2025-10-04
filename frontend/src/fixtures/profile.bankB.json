@@ -1,0 +1,122 @@
+{
+  "datasetId": "bankB",
+  "fileHash": "e5f6g7h8",
+  "rowCountSampled": 200,
+  "columns": [
+    {
+      "name": "acct_number",
+      "inferredType": "string",
+      "blanksPct": 0,
+      "exampleValues": ["B-001", "B-002", "B-003", "B-004", "B-005"]
+    },
+    {
+      "name": "email_address",
+      "inferredType": "string",
+      "blanksPct": 3.0,
+      "exampleValues": ["john.doe@example.com", "jane.smith@test.ca", "alice@demo.com", "bob@company.org", "charlie@bank.com"]
+    },
+    {
+      "name": "current_balance",
+      "inferredType": "number",
+      "blanksPct": 0,
+      "exampleValues": ["1250.50", "89234.12", "12.99", "15678.90", "234.56"]
+    },
+    {
+      "name": "date_opened",
+      "inferredType": "date",
+      "blanksPct": 0,
+      "exampleValues": ["2021-03-15", "2022-07-22", "2021-01-10", "2023-01-10", "2021-12-31"]
+    },
+    {
+      "name": "product_type",
+      "inferredType": "string",
+      "blanksPct": 0,
+      "exampleValues": ["checking", "savings", "business", "premium", "basic"]
+    }
+  ],
+  "likelyKeys": [
+    {
+      "column": "acct_number",
+      "score": 0.92,
+      "reason": "Unique values, no nulls, consistent format"
+    },
+    {
+      "column": "email_address",
+      "score": 0.82,
+      "reason": "High uniqueness, email format validation"
+    }
+  ],
+  "sampleRows": [
+    {
+      "acct_number": "B-001",
+      "email_address": "john.doe@example.com",
+      "current_balance": 1250.50,
+      "date_opened": "2021-03-15",
+      "product_type": "checking"
+    },
+    {
+      "acct_number": "B-002",
+      "email_address": "jane.smith@test.ca",
+      "current_balance": 89234.12,
+      "date_opened": "2022-07-22",
+      "product_type": "savings"
+    },
+    {
+      "acct_number": "B-003",
+      "email_address": "alice@demo.com",
+      "current_balance": 12.99,
+      "date_opened": "2021-01-10",
+      "product_type": "business"
+    },
+    {
+      "acct_number": "B-004",
+      "email_address": "bob@company.org",
+      "current_balance": 15678.90,
+      "date_opened": "2023-01-10",
+      "product_type": "premium"
+    },
+    {
+      "acct_number": "B-005",
+      "email_address": "charlie@bank.com",
+      "current_balance": 234.56,
+      "date_opened": "2021-12-31",
+      "product_type": "basic"
+    },
+    {
+      "acct_number": "B-006",
+      "email_address": "diana@example.org",
+      "current_balance": 5678.90,
+      "date_opened": "2022-05-15",
+      "product_type": "checking"
+    },
+    {
+      "acct_number": "B-007",
+      "email_address": "eve@test.com",
+      "current_balance": 12345.67,
+      "date_opened": "2021-08-20",
+      "product_type": "savings"
+    },
+    {
+      "acct_number": "B-008",
+      "email_address": "frank@company.ca",
+      "current_balance": 890.12,
+      "date_opened": "2023-02-14",
+      "product_type": "business"
+    },
+    {
+      "acct_number": "B-009",
+      "email_address": "grace@demo.org",
+      "current_balance": 23456.78,
+      "date_opened": "2020-12-01",
+      "product_type": "premium"
+    },
+    {
+      "acct_number": "B-010",
+      "email_address": "henry@bank.ca",
+      "current_balance": 345.67,
+      "date_opened": "2022-09-30",
+      "product_type": "basic"
+    }
+  ]
+}
+

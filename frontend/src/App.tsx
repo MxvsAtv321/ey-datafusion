@@ -5,12 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppHeader } from "@/components/AppHeader";
 import { StepperNav } from "@/components/StepperNav";
-import UploadPage from "./pages/UploadPage";
-import ProfilePage from "./pages/ProfilePage";
 import MappingPage from "./pages/MappingPage";
 import MergePage from "./pages/MergePage";
 import ExportPage from "./pages/ExportPage";
 import NotFound from "./pages/NotFound";
+import { UploadProfilePage } from "./features/uploadProfile";
 
 const queryClient = new QueryClient();
 
@@ -26,8 +25,8 @@ const App = () => (
             <StepperNav />
             <main className="flex-1 overflow-auto">
               <Routes>
-                <Route path="/" element={<UploadPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/" element={<UploadProfilePage />} />
+                <Route path="/upload-profile" element={<UploadProfilePage />} />
                 <Route path="/mapping" element={<MappingPage />} />
                 <Route path="/merge" element={<MergePage />} />
                 <Route path="/export" element={<ExportPage />} />
