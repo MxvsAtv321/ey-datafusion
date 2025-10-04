@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Body
+from fastapi import APIRouter, Depends, UploadFile, File, Body, Form
 import pandas as pd
 from typing import Dict, List
 from ..core.security import require_api_key
@@ -56,7 +56,7 @@ async def match(files: List[UploadFile] = File(...)):
 
 
 @router.post("/merge", dependencies=[Depends(require_api_key)])
-async def merge(files: List[UploadFile] = File(...), decisions: dict = Body(default={})):  # type: ignore[assignment]
+async def merge(files: List[UploadFile] = File(...), decisions: str | None = Form(default=None)):
     if len(files) != 2:
         raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
     dfs = []
@@ -66,8 +66,10 @@ async def merge(files: List[UploadFile] = File(...), decisions: dict = Body(defa
         df = normalize_headers(df)
         dfs.append(df)
     left_df, right_df = dfs
+    import json
     try:
-        decisions_models = [MappingDecision.model_validate(d) for d in decisions or []]
+        raw = json.loads(decisions or "[]")
+        decisions_models = [MappingDecision.model_validate(d) for d in raw or []]
     except Exception:
         decisions_models = []
     merged = merge_datasets({"left": left_df, "right": right_df}, decisions_models, lineage_meta={})
