@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, RotateCcw } from 'lucide-react';
+import { CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { suggestMappings } from '@/api/mappings';
 import { MappingCandidate, MappingDecision, ThresholdStats } from '@/types/mapping';
@@ -148,12 +148,24 @@ export const SuggestMappingsPage: React.FC = () => {
             Review and approve column mappings between Bank A and Bank B
           </p>
         </div>
-        {secureMode && (
-          <Badge variant="outline" className="flex items-center space-x-1">
-            <Shield className="h-4 w-4" />
-            <span>Secure Mode: ON</span>
-          </Badge>
-        )}
+        <Badge 
+          variant={secureMode ? "default" : "secondary"}
+          className="flex items-center space-x-2"
+          data-testid="secure-badge"
+          aria-live="polite"
+        >
+          {secureMode ? (
+            <>
+              <CheckCircle className="w-4 h-4" />
+              <span>Secure Mode: ON</span>
+            </>
+          ) : (
+            <>
+              <AlertCircle className="w-4 h-4" />
+              <span>Secure Mode: OFF</span>
+            </>
+          )}
+        </Badge>
       </div>
 
       {/* Controls */}
