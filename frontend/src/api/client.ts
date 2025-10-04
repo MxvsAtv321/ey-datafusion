@@ -34,12 +34,17 @@ export const api = {
 
   merge: async (
     files: File[],
-    decisions: MappingDecision[]
+    decisions: MappingDecision[],
+    opts?: { limit?: number; entityResolution?: string }
   ): Promise<MergeResponse> => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     formData.append("decisions", JSON.stringify(decisions));
-    const response = await client.post("/merge", formData, {
+    const qs: string[] = [];
+    if (opts?.limit) qs.push(`limit=${opts.limit}`);
+    if (opts?.entityResolution) qs.push(`entity_resolution=${encodeURIComponent(opts.entityResolution)}`);
+    const url = "/merge" + (qs.length ? `?${qs.join("&")}` : "");
+    const response = await client.post(url, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
@@ -54,6 +59,16 @@ export const api = {
       rows: mergedPreview.rows,
     });
     return response.data;
+  },
+
+  copilotTriage: async (profiles: any, candidates: any[], targetPrecision?: number): Promise<{ proposals: any[] }> => {
+    const { data } = await client.post("/copilot/triage", { profiles, candidates, target_precision: targetPrecision });
+    return data;
+  },
+
+  copilotFixit: async (validateResult: any): Promise<{ proposals: any[] }> => {
+    const { data } = await client.post("/copilot/fixit", { validate_result: validateResult });
+    return data;
   },
 
   docs: async (manifest: any): Promise<DocsResponse> => {
