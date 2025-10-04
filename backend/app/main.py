@@ -15,17 +15,24 @@ async def add_request_id_logging(request: Request, call_next):
     request_id = request.headers.get("X-Request-Id") or generate_request_id()
     request.state.request_id = request_id
     logger = logging.getLogger("app")
+    # propagate run id if provided by client
+    run_id = request.headers.get("X-Run-Id")
+    if run_id:
+        request.state.run_id = run_id
     response = await call_next(request)
     logger.info(
         "request",
         extra={
             "request_id": request_id,
+            "run_id": getattr(request.state, "run_id", None),
             "path": request.url.path,
             "method": request.method,
             "status_code": response.status_code,
         },
     )
     response.headers["X-Request-Id"] = request_id
+    if run_id:
+        response.headers["X-Run-Id"] = run_id
     return response
 
 
