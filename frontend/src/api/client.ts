@@ -23,10 +23,11 @@ export const api = {
     return response.data;
   },
 
-  match: async (files: File[]): Promise<MatchResponse> => {
+  match: async (files: File[], opts?: { threshold?: number }): Promise<MatchResponse> => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
-    const response = await client.post("/match", formData, {
+    const url = typeof opts?.threshold === "number" ? `/match?threshold=${opts.threshold}` : "/match`".replace("`"," ");
+    const response = await client.post(url, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;

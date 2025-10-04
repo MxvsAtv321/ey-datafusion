@@ -3,7 +3,7 @@ export type SemanticTag = "email_like"|"phone_like"|"canadian_postal_code"|"date
 
 export interface ColumnProfile { name:string; dtype:DType; null_count:number; unique_count_sampled:number; candidate_primary_key_sampled:boolean; examples:string[]; semantic_tags:SemanticTag[]; }
 export interface TableProfile { table:string; rows:number; columns:number; sample_n:number; columns_profile:ColumnProfile[]; }
-export interface ProfileResponse { profiles: Record<string, TableProfile>; }
+export interface ProfileResponse { profiles: Record<string, TableProfile>; examples_masked?: boolean }
 
 export type ScoreKey = "name"|"type"|"value_overlap"|"embedding";
 export interface CandidateMapping {
@@ -12,9 +12,11 @@ export interface CandidateMapping {
   scores: Record<ScoreKey, number>;
   confidence:number;
   decision:"auto"|"review";
+  reasons?: string[];
+  warnings?: string[];
   explain?: { left_examples:string[]; right_examples:string[] };
 }
-export interface MatchResponse { candidates: CandidateMapping[]; }
+export interface MatchResponse { candidates: CandidateMapping[]; threshold?: number; run_id?: string; stats?: { total_pairs:number; auto_count:number; review_count:number; auto_pct:number; estimated_minutes_saved:number } }
 
 export interface MappingDecision {
   left_table:string; left_column:string;
