@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import type { CandidateMapping, MappingDecision } from "@/api/types";
-import { FixedSizeList as List } from "react-window";
+import { List } from "react-window";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
