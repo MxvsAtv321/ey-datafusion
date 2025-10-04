@@ -98,6 +98,21 @@ export const useStore = create<AppState>((set) => ({
   setProfiles: (profiles) => set({ profiles }),
   setCandidates: (candidates) => set({ candidates }),
   setDecisions: (decisions) => set({ decisions }),
+  upsertDecision: (indexOrDecision: any, maybeDecision?: any) =>
+    set((state) => {
+      if (typeof indexOrDecision === "number") {
+        const index = indexOrDecision as number;
+        const decision = maybeDecision as Partial<MappingDecision>;
+        return {
+          decisions: state.decisions.map((d, i) => (i === index ? { ...d, ...decision } : d)),
+        };
+      }
+      const d = indexOrDecision as MappingDecision;
+      const others = state.decisions.filter(
+        (x) => !(x.left_table === d.left_table && x.left_column === d.left_column)
+      );
+      return { decisions: [...others, d] };
+    }),
   updateDecision: (index, decision) =>
     set((state) => ({
       decisions: state.decisions.map((d, i) =>
@@ -108,10 +123,27 @@ export const useStore = create<AppState>((set) => ({
   setViolations: (violations) => set({ violations }),
   setManifest: (manifest) => set({ manifest }),
   setBaselineProfile: (baselineProfile) => set({ baselineProfile }),
-  setThreshold: (threshold) =>
-    set((state) => ({
-      settings: { ...state.settings, threshold },
-    })),
+  setThreshold: (threshold) => set((state) => ({ settings: { ...state.settings, threshold } })),
+  bulkAcceptAuto: (leftTable: string, rightTable: string) =>
+    set((state) => {
+      const t = state.settings.threshold;
+      const chosen = state.candidates.reduce((acc: Record<string, any>, c) => {
+        const k = c.left_column;
+        if (!acc[k] || c.confidence > acc[k].confidence) acc[k] = c;
+        return acc;
+      }, {} as Record<string, any>);
+      const autos: MappingDecision[] = Object.values(chosen)
+        .filter((c: any) => c.confidence >= t)
+        .map((c: any) => ({
+          left_table: leftTable,
+          left_column: c.left_column,
+          right_table: rightTable,
+          right_column: c.right_column,
+          decision: "auto",
+          confidence: c.confidence,
+        }));
+      return { decisions: autos };
+    }),
   toggleDemoMode: () =>
     set((state) => ({
       settings: { ...state.settings, demoMode: !state.settings.demoMode },
