@@ -18,16 +18,23 @@ import { ProfileSummary } from "@/features/uploadProfile/components/ProfileSumma
 import { BankSelector } from "@/features/uploadProfile/components/BankSelector";
 import { DatasetProfile } from "@/types/profile";
 import { toast } from "@/hooks/use-toast";
+import { useStore } from "@/state/store";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { setCurrentStep } = useStore();
   const [profiles, setProfiles] = useState<{ bankA: DatasetProfile; bankB: DatasetProfile } | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedBank, setSelectedBank] = useState<"bankA" | "bankB">("bankA");
 
   const profileMutation = useProfileDatasets();
+
+  // Set current step to Profile (step 1) when component mounts
+  useEffect(() => {
+    setCurrentStep(1);
+  }, [setCurrentStep]);
 
   // Get run data from location state or URL params
   useEffect(() => {

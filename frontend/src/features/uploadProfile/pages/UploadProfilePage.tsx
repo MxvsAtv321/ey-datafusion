@@ -82,15 +82,17 @@ export const UploadProfilePage = () => {
         description: `Run ${runInfo.runId} is now profiling your datasets (${bankAFiles.length} + ${bankBFiles.length} files)`,
       });
 
-      // Navigate to profile page with data
-      navigate("/profile", {
-        state: {
-          runId: runInfo.runId,
-          profiles: profileData,
-          bankAFiles,
-          bankBFiles,
-        },
-      });
+      // Extended delay to show loading screen and ensure smooth transition
+      setTimeout(() => {
+        navigate("/profile", {
+          state: {
+            runId: runInfo.runId,
+            profiles: profileData,
+            bankAFiles,
+            bankBFiles,
+          },
+        });
+      }, 400);
     } catch (error) {
       console.error("Error starting run:", error);
       toast({
@@ -209,8 +211,8 @@ export const UploadProfilePage = () => {
         </Button>
       </div>
 
-      {/* Run ID Display */}
-      {runId && (
+      {/* Run ID Display - Only show when not loading */}
+      {runId && !startRunMutation.isPending && !profileMutation.isPending && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
@@ -241,12 +243,22 @@ export const UploadProfilePage = () => {
         </Card>
       )}
 
-      {/* Loading State */}
-      {profileMutation.isPending && (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center space-y-4">
-            <div className="w-8 h-8 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent" />
-            <p className="text-muted-foreground">Generating profiles...</p>
+      {/* Loading State - Full Screen Overlay */}
+      {(startRunMutation.isPending || profileMutation.isPending) && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="text-center space-y-6 p-8 bg-background rounded-lg shadow-lg border">
+            <div className="w-12 h-12 mx-auto animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold">
+                {startRunMutation.isPending ? "Starting Run..." : "Generating Profiles..."}
+              </h3>
+              <p className="text-muted-foreground">
+                {startRunMutation.isPending 
+                  ? "Initializing your data processing run" 
+                  : "Analyzing your datasets and generating detailed profiles"
+                }
+              </p>
+            </div>
           </div>
         </div>
       )}
