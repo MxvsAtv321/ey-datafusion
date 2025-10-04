@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { GitMerge, CheckCircle, AlertTriangle, ArrowRight } from "lucide-react";
 import { api } from "@/api/client";
 import { toast } from "@/hooks/use-toast";
+import DataGridVirtualized from "@/components/advanced/DataGridVirtualized";
+import ValidationPanel from "@/components/advanced/ValidationPanel";
 
 export default function MergePage() {
   const { files, decisions, mergedPreview, setMergedPreview, violations, setViolations, setCurrentStep } = useStore();
@@ -143,37 +145,7 @@ export default function MergePage() {
               </div>
             </div>
 
-            {violations.violations.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="font-semibold">Violations</h4>
-                {violations.violations.map((v, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-3 rounded-lg border p-4"
-                  >
-                    <AlertTriangle
-                      className={`h-5 w-5 mt-0.5 ${
-                        v.severity === "error" ? "text-destructive" : "text-warning"
-                      }`}
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <p className="font-medium">{v.rule.replace(/_/g, " ")}</p>
-                        <Badge
-                          variant={v.severity === "error" ? "destructive" : "secondary"}
-                          className={v.severity === "warning" ? "bg-warning/10 text-warning" : ""}
-                        >
-                          {v.severity}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {v.count} violation{v.count !== 1 ? "s" : ""} found (sample rows: {v.sample.join(", ")})
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <ValidationPanel result={violations} />
           </CardContent>
         </Card>
       )}
@@ -184,36 +156,7 @@ export default function MergePage() {
             <CardTitle>Merged Data Preview</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    {mergedPreview.columns.map((col, idx) => (
-                      <th
-                        key={idx}
-                        className="sticky-header px-3 py-2 text-left text-xs font-semibold"
-                      >
-                        {col}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {mergedPreview.rows.slice(0, 50).map((row, idx) => (
-                    <tr key={idx} className="border-b hover:bg-muted/30 transition-colors">
-                      {mergedPreview.columns.map((col, colIdx) => (
-                        <td key={colIdx} className="px-3 py-2 text-xs font-mono truncate max-w-xs">
-                          {String(row[col])}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Showing first 50 rows of {mergedPreview.rows.length}
-            </p>
+            <DataGridVirtualized columns={mergedPreview.columns} rows={mergedPreview.rows} pinned={["_source_bank","_source_file","_transform_chain"]} />
           </CardContent>
         </Card>
       ) : (
