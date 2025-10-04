@@ -4,19 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { Wand2, ArrowRight, HelpCircle } from "lucide-react";
+import { Wand2, ArrowRight } from "lucide-react";
 import { api } from "@/api/client";
 import { toast } from "@/hooks/use-toast";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import MappingTable from "@/components/advanced/MappingTable";
+import TransformEditor from "@/components/advanced/TransformEditor";
 
 export default function MappingPage() {
-  const { files, candidates, setCandidates, setDecisions, setCurrentStep, settings } = useStore();
+  const { files, candidates, setCandidates, setDecisions, upsertDecision, setCurrentStep, settings } = useStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [transformOpen, setTransformOpen] = useState(false);
+  const [transformTarget, setTransformTarget] = useState<{ left: string; right: string } | null>(null);
   const navigate = useNavigate();
 
   const handleSuggestMappings = async () => {
@@ -70,6 +69,21 @@ export default function MappingPage() {
 
   const autoCount = candidates.filter((c) => c.confidence >= settings.threshold).length;
   const reviewCount = candidates.length - autoCount;
+  const rightColumns = Array.from(new Set(candidates.map((c) => c.right_column)));
+
+  const onDecisionChange = (d: any) => {
+    if (upsertDecision) {
+      upsertDecision(d);
+    } else {
+      // fallback: append to decisions list
+      setDecisions([d] as any);
+    }
+  };
+
+  const onOpenTransform = (left: string, right: string) => {
+    setTransformTarget({ left, right });
+    setTransformOpen(true);
+  };
 
   return (
     <div className="container max-w-7xl p-6">
@@ -147,130 +161,18 @@ export default function MappingPage() {
             <CardTitle>Mapping Candidates ({candidates.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                      Left Column
-                    </th>
-                    <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                      Right Column
-                    </th>
-                    <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                      Scores
-                    </th>
-                    <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                      Confidence
-                    </th>
-                    <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                      Decision
-                    </th>
-                    <th className="sticky-header px-4 py-3 text-left text-sm font-semibold">
-                      Explain
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidates.map((candidate, idx) => (
-                    <tr key={idx} className="border-b hover:bg-muted/30 transition-colors">
-                      <td className="data-cell font-mono font-medium">
-                        {candidate.left_column}
-                      </td>
-                      <td className="data-cell font-mono font-medium">
-                        {candidate.right_column}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex gap-1">
-                          <Badge variant="outline" className="text-xs">
-                            N:{(candidate.scores.name * 100).toFixed(0)}%
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            T:{(candidate.scores.type * 100).toFixed(0)}%
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            O:{(candidate.scores.value_overlap * 100).toFixed(0)}%
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            E:{(candidate.scores.embedding * 100).toFixed(0)}%
-                          </Badge>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="space-y-1">
-                          <div className="confidence-bar">
-                            <div
-                              className={cn("confidence-fill", getConfidenceClass(candidate.confidence))}
-                              style={{ width: `${candidate.confidence * 100}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-medium">
-                            {(candidate.confidence * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        <Badge
-                          variant={candidate.decision === "auto" ? "default" : "secondary"}
-                          className={
-                            candidate.decision === "auto"
-                              ? "bg-success text-success-foreground"
-                              : "bg-warning/10 text-warning"
-                          }
-                        >
-                          {candidate.decision === "auto" ? "Auto" : "Review"}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-2">
-                        {candidate.explain && (
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <HelpCircle className="h-4 w-4" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-96">
-                              <div className="space-y-3">
-                                <h4 className="font-semibold text-sm">Why this match?</h4>
-                                <div className="space-y-2">
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">
-                                      Scoring Formula:
-                                    </p>
-                                    <code className="text-xs bg-muted px-2 py-1 rounded">
-                                      (name × 0.3) + (type × 0.2) + (overlap × 0.25) + (embedding × 0.25)
-                                    </code>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">
-                                      Left examples:
-                                    </p>
-                                    <div className="font-mono text-xs bg-muted p-2 rounded">
-                                      {candidate.explain.left_examples.slice(0, 3).join(", ")}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-muted-foreground mb-1">
-                                      Right examples:
-                                    </p>
-                                    <div className="font-mono text-xs bg-muted p-2 rounded">
-                                      {candidate.explain.right_examples.slice(0, 3).join(", ")}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <MappingTable candidates={candidates as any} threshold={settings.threshold} rightColumns={rightColumns} decisions={[]} onDecisionChange={onDecisionChange} onOpenTransform={onOpenTransform} />
           </CardContent>
         </Card>
       )}
+
+      <TransformEditor
+        open={transformOpen}
+        onClose={() => setTransformOpen(false)}
+        onSave={(ops) => transformTarget && onDecisionChange({ left_table: "left", left_column: transformTarget.left, right_table: "right", right_column: transformTarget.right, decision: "manual", confidence: 0, transform_ops: ops })}
+        availableFields={rightColumns}
+        initialOps={[]}
+      />
     </div>
   );
 }
