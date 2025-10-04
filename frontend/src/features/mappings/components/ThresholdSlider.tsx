@@ -12,9 +12,9 @@ interface ThresholdSliderProps {
 export const ThresholdSlider: React.FC<ThresholdSliderProps> = ({
   value,
   onChange,
-  min = 0.3,
+  min = 0.5,
   max = 0.95,
-  step = 0.01,
+  step = 0.05,
 }) => {
   const handleValueChange = (newValue: number[]) => {
     onChange(newValue[0]);
@@ -23,7 +23,7 @@ export const ThresholdSlider: React.FC<ThresholdSliderProps> = ({
   const handleKeyDown = (event: React.KeyboardEvent) => {
     let newValue = value;
     const stepSize = step;
-    const pageSize = 0.05;
+    const pageSize = 0.1;
 
     switch (event.key) {
       case 'ArrowLeft':
@@ -57,31 +57,30 @@ export const ThresholdSlider: React.FC<ThresholdSliderProps> = ({
   };
 
   return (
-    <div className="flex items-center space-x-4">
+    <div className="space-y-2">
       <label htmlFor="threshold-slider" className="text-sm font-medium">
-        Confidence Threshold
+        Confidence Threshold: {formatValue(value)}
       </label>
-      <div className="flex-1 max-w-xs">
-        <Slider
-          id="threshold-slider"
-          data-testid="threshold-slider"
-          value={[value]}
-          onValueChange={handleValueChange}
-          min={min}
-          max={max}
-          step={step}
-          onKeyDown={handleKeyDown}
-          className="w-full"
-          aria-label="Confidence threshold"
-          aria-valuenow={value}
-          aria-valuemin={min}
-          aria-valuemax={max}
-          aria-valuetext={`${formatValue(value)} confidence threshold`}
-        />
-      </div>
-      <div className="text-sm font-mono min-w-[3rem] text-right">
-        {formatValue(value)}
-      </div>
+      <Slider
+        id="threshold-slider"
+        data-testid="threshold-slider"
+        value={[value * 100]}
+        onValueChange={(newValue) => onChange(newValue[0] / 100)}
+        min={min * 100}
+        max={max * 100}
+        step={step * 100}
+        onKeyDown={handleKeyDown}
+        className="w-full"
+        showConfidenceColors={true}
+        aria-label="Confidence threshold"
+        aria-valuenow={value * 100}
+        aria-valuemin={min * 100}
+        aria-valuemax={max * 100}
+        aria-valuetext={`${formatValue(value)} confidence threshold`}
+      />
+      <p className="text-xs text-muted-foreground">
+        Mappings above this threshold are auto-accepted
+      </p>
     </div>
   );
 };
