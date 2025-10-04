@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, UploadFile, File, Body
 from typing import Dict, List
 from ..core.security import require_api_key
 from ..core.config import settings
+from ..core.config import settings
+from ..services.ingest import load_table, normalize_headers
+from ..services.profile import profile_table
+from ..schemas.profile import ProfileResponse
 
 
 router = APIRouter()
@@ -13,9 +17,16 @@ async def healthz():
 
 
 # Stubs for B1..B8
-@router.post("/profile", dependencies=[Depends(require_api_key)])
+@router.post("/profile", response_model=ProfileResponse, dependencies=[Depends(require_api_key)])
 async def profile(files: List[UploadFile] = File(...)):
-    return {"profiles": {f.filename: {"table": f.filename} for f in files}}
+    profiles: Dict[str, dict] = {}
+    for f in files:
+        content = await f.read()
+        df = load_table(content, f.filename)
+        df = normalize_headers(df)
+        prof = profile_table(df, f.filename, settings.sample_n)
+        profiles[f.filename] = prof.model_dump()
+    return {"profiles": profiles}
 
 
 @router.post("/match", dependencies=[Depends(require_api_key)])
