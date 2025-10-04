@@ -5,6 +5,15 @@ import {
   MappingDecision,
   ValidateResponse,
 } from "@/api/types";
+import { api } from "@/api/client";
+
+export type Health = {
+  service: string;
+  version: string;
+  regulated_mode: boolean;
+  embeddings_enabled: boolean;
+  masking_policy: { match_explain: boolean; profile_examples_masked: boolean } | null;
+};
 
 interface AppState {
   // Data
@@ -28,6 +37,13 @@ interface AppState {
     json?: string;
   };
   baselineProfile?: TableProfile;
+
+  // Health cache
+  health: Health | null;
+  healthLoading: boolean;
+  healthError: string | null;
+  fetchHealth: () => Promise<void>;
+  startAutoRefresh: (ms?: number) => void;
 
   // Settings
   settings: {
@@ -62,7 +78,9 @@ interface AppState {
   reset: () => void;
 }
 
-export const useStore = create<AppState>((set) => ({
+let healthTimer: number | undefined;
+
+export const useStore = create<AppState>((set, get) => ({
   files: [],
   bank1Files: [],
   bank2Files: [],
@@ -73,6 +91,35 @@ export const useStore = create<AppState>((set) => ({
   violations: undefined,
   manifest: undefined,
   baselineProfile: undefined,
+  health: null,
+  healthLoading: false,
+  healthError: null,
+  async fetchHealth() {
+    set({ healthLoading: true, healthError: null });
+    try {
+      const h = await api.getHealth();
+      const health: Health = {
+        service: h.service,
+        version: h.version,
+        regulated_mode: !!h.regulated_mode,
+        embeddings_enabled: !!h.embeddings_enabled,
+        masking_policy: h.masking_policy ?? null,
+      };
+      set({ health, healthLoading: false });
+    } catch (e: any) {
+      set({ healthLoading: false, healthError: e?.message || "Failed to load health" });
+    }
+  },
+  startAutoRefresh(ms = 60000) {
+    if (healthTimer) return;
+    // initial fetch
+    get().fetchHealth();
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    healthTimer = window.setInterval(() => {
+      get().fetchHealth();
+    }, ms);
+  },
   settings: {
     demoMode: true,
     threshold: 0.7,

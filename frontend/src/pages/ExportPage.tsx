@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "@/state/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { FileDown, Copy, FileText, AlertCircle, Check } from "lucide-react";
 import { api } from "@/api/client";
@@ -15,6 +16,8 @@ export default function ExportPage() {
   const [driftData, setDriftData] = useState<any>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const gateBlocked = violations?.gate_blocked === true;
+  const navigate = useNavigate();
+  const toValidation = () => navigate("/validation", { state: { focus: "violations" } });
 
   const handleGenerateDocs = async () => {
     const manifestData = {
@@ -104,7 +107,10 @@ export default function ExportPage() {
       {gateBlocked && (
         <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900 mb-4">
           <div className="font-medium">Export blocked by validation gates</div>
-          <div className="text-sm">Resolve required rules before exporting.</div>
+          <div className="text-sm">
+            Resolve required rules before exporting.
+            <button className="ml-2 underline underline-offset-2" onClick={toValidation}>Go to Validation</button>
+          </div>
         </div>
       )}
 
