@@ -23,7 +23,7 @@ export const ThresholdSlider: React.FC<ThresholdSliderProps> = ({
   const handleKeyDown = (event: React.KeyboardEvent) => {
     let newValue = value;
     const stepSize = step;
-    const pageSize = 0.1;
+    const pageSize = 0.05; // Smaller page size for smoother navigation
 
     switch (event.key) {
       case 'ArrowLeft':
@@ -53,31 +53,42 @@ export const ThresholdSlider: React.FC<ThresholdSliderProps> = ({
   };
 
   const formatValue = (val: number) => {
-    return (val * 100).toFixed(0) + '%';
+    return (val * 100).toFixed(1) + '%';
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <label htmlFor="threshold-slider" className="text-sm font-medium">
         Confidence Threshold: {formatValue(value)}
       </label>
-      <Slider
-        id="threshold-slider"
-        data-testid="threshold-slider"
-        value={[value * 100]}
-        onValueChange={(newValue) => onChange(newValue[0] / 100)}
-        min={min * 100}
-        max={max * 100}
-        step={step * 100}
-        onKeyDown={handleKeyDown}
-        className="w-full"
-        showConfidenceColors={true}
-        aria-label="Confidence threshold"
-        aria-valuenow={value * 100}
-        aria-valuemin={min * 100}
-        aria-valuemax={max * 100}
-        aria-valuetext={`${formatValue(value)} confidence threshold`}
-      />
+      <div className="relative">
+        <Slider
+          id="threshold-slider"
+          data-testid="threshold-slider"
+          value={[value * 100]}
+          onValueChange={(newValue) => onChange(newValue[0] / 100)}
+          min={min * 100}
+          max={max * 100}
+          step={step * 100}
+          onKeyDown={handleKeyDown}
+          className="w-full"
+          showConfidenceColors={true}
+          aria-label="Confidence threshold"
+          aria-valuenow={value * 100}
+          aria-valuemin={min * 100}
+          aria-valuemax={max * 100}
+          aria-valuetext={`${formatValue(value)} confidence threshold`}
+        />
+        {/* Add tick marks for better visual reference */}
+        <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+          <span>50%</span>
+          <span>60%</span>
+          <span>70%</span>
+          <span>80%</span>
+          <span>90%</span>
+          <span>95%</span>
+        </div>
+      </div>
       <p className="text-xs text-muted-foreground">
         Mappings above this threshold are auto-accepted
       </p>
