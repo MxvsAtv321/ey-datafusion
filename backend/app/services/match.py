@@ -3,6 +3,7 @@ from typing import List, Dict, Tuple
 import math
 import pandas as pd
 from app.core.config import settings
+from ._masking import mask_examples
 
 try:
     from rapidfuzz import fuzz
@@ -24,16 +25,45 @@ def _dtype_simple(series: pd.Series) -> str:
 
 def _types_compatible(a: pd.Series, b: pd.Series) -> bool:
     sa, sb = _dtype_simple(a), _dtype_simple(b)
-    if sa == sb:
-        return True
-    family = {"integer", "number", "boolean", "datetime", "string"}
-    return sa in family and sb in family
+    # Strict equality only; differing families are considered mismatched
+    return sa == sb
 
 
 def _name_score(a: str, b: str) -> float:
+    def _norm(x: str) -> str:
+        s = x.lower().strip()
+        s = s.replace("_", " ")
+        # common abbreviations
+        synonyms = {
+            "acct": "account",
+            "cust": "customer",
+            "num": "number",
+            "no": "number",
+            "id": "id",
+            "fname": "first name",
+            "lname": "last name",
+            "addr": "address",
+            "e_mail": "email",
+        }
+        for k, v in synonyms.items():
+            s = re.sub(rf"\b{k}\b", v, s)
+        return s
+
+    try:
+        import re  # local to avoid global import if not needed
+    except Exception:
+        re = None  # type: ignore
+
+    a0, b0 = a, b
+    a1, b1 = _norm(a), _norm(b)
     if not fuzz:
-        return 1.0 if a.lower() == b.lower() else 0.0
-    return max(fuzz.token_sort_ratio(a, b), fuzz.partial_ratio(a, b)) / 100.0
+        return 1.0 if a1 == b1 else (1.0 if a0.lower() == b0.lower() else 0.0)
+    return max(
+        fuzz.token_sort_ratio(a0, b0),
+        fuzz.partial_ratio(a0, b0),
+        fuzz.token_sort_ratio(a1, b1),
+        fuzz.partial_ratio(a1, b1),
+    ) / 100.0
 
 
 def _cosine(a: List[float], b: List[float]) -> float:
@@ -65,33 +95,42 @@ def _value_overlap(sa: pd.Series, sb: pd.Series, sample_n: int) -> Tuple[float, 
     jacc = len(inter) / max(1, len(union))
     ex_a = list(sa.dropna().astype(str).head(3).unique())
     ex_b = list(sb.dropna().astype(str).head(3).unique())
-    return jacc, _mask_examples(ex_a), _mask_examples(ex_b)
+    return jacc, mask_examples(ex_a), mask_examples(ex_b)
 
 
-def _mask_examples(values: List[str]) -> List[str]:
-    if not settings.regulated_mode:
-        return values
-    import re
-    masked = []
-    for v in values:
-        # email
-        if re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", v or ""):
-            masked.append(re.sub(r"([A-Za-z0-9._%+-]).*@.*", r"\1***@***.com", v))
-            continue
-        # phone keep last 4
-        m = re.search(r"(\d{4})$", re.sub(r"\D", "", v or ""))
-        if m and len(re.sub(r"\D", "", v)) >= 7:
-            masked.append(f"***-***-{m.group(1)}")
-            continue
-        # IBAN last4
-        if re.fullmatch(r"[A-Z]{2}\d{2}[A-Z0-9]{1,30}", v or "", flags=re.I):
-            masked.append("****" + (v[-4:] if len(v) >= 4 else v))
-            continue
-        masked.append((v or "")[:12])
-    return masked
+def _reasons_and_warnings(scores: Dict[str, float], embeddings_enabled: bool) -> Tuple[List[str], List[str]]:
+    reasons: List[str] = []
+    warnings: List[str] = []
+    name = float(scores.get("name", 0.0))
+    vtype = float(scores.get("type", 0.0))
+    overlap = float(scores.get("value_overlap", 0.0))
+    emb = float(scores.get("embedding", 0.0))
+    # name
+    if name >= 0.85:
+        reasons.append("High name similarity")
+    elif 0.65 <= name < 0.85:
+        reasons.append("Moderate name similarity")
+    elif name < 0.50:
+        warnings.append("Low name similarity")
+    # type
+    if vtype >= 1.0:
+        reasons.append("Types compatible")
+    else:
+        warnings.append("Type mismatch")
+    # overlap
+    if overlap >= 0.50:
+        reasons.append("High value overlap")
+    elif 0.25 <= overlap < 0.50:
+        reasons.append("Moderate value overlap")
+    elif overlap < 0.15:
+        warnings.append("Low value overlap")
+    # embedding
+    if embeddings_enabled and emb >= 0.60:
+        reasons.append("Semantic match")
+    return reasons, warnings
 
 
-def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: int = 1000) -> List[Dict]:
+def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: int = 1000, threshold: float | None = None) -> List[Dict]:
     left_cols = list(left_df.columns)
     right_cols = list(right_df.columns)
 
@@ -107,7 +146,14 @@ def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: in
             emb = _cosine(le[i], re[j])
 
             conf = 0.45 * name + 0.20 * type_compat + 0.20 * overlap + 0.15 * emb
-            decision = "auto" if conf >= settings.match_auto_threshold else "review"
+            thr = threshold if threshold is not None else settings.match_auto_threshold
+            decision = "auto" if conf >= thr else "review"
+            reasons, warnings = _reasons_and_warnings({
+                "name": name,
+                "type": type_compat,
+                "value_overlap": overlap,
+                "embedding": emb,
+            }, settings.embeddings_enabled)
 
             out.append(
                 {
@@ -121,6 +167,8 @@ def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: in
                     },
                     "confidence": round(conf, 6),
                     "decision": decision,
+                    "reasons": reasons,
+                    "warnings": warnings,
                     "explain": {"left_examples": ex_a, "right_examples": ex_b},
                 }
             )

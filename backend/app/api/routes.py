@@ -26,7 +26,13 @@ router = APIRouter()
 
 @router.get("/healthz")
 async def healthz():
-    return {"service": settings.service_name, "version": settings.version}
+    return {
+        "service": settings.service_name,
+        "version": settings.version,
+        "regulated_mode": settings.regulated_mode,
+        "masking_policy": {"match_explain": True, "profile_examples_masked": settings.profile_examples_masked},
+        "embeddings_enabled": settings.embeddings_enabled,
+    }
 
 
 # Stubs for B1..B8
@@ -45,11 +51,13 @@ async def profile(request: Request, files: List[UploadFile] = File(...)):
         h = hashlib.sha256(content).hexdigest()
         inputs_meta.append({"name": f.filename, "size": len(content), "sha256": f"sha256:{h}"})
     add_input_files(getattr(request.state, "run_id", None), inputs_meta)
-    return {"profiles": profiles}
+    # import settings at request time so tests that toggle env are respected
+    from app.core.config import settings as cfg_settings
+    return {"profiles": profiles, "examples_masked": cfg_settings.profile_examples_masked}
 
 
 @router.post("/match", response_model=MatchResponse, dependencies=[Depends(require_api_key)])
-async def match(request: Request, files: List[UploadFile] = File(...)):
+async def match(request: Request, files: List[UploadFile] = File(...), threshold: float | None = Query(default=None)):
     if len(files) != 2:
         raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
     dfs = []
@@ -62,22 +70,36 @@ async def match(request: Request, files: List[UploadFile] = File(...)):
         df = normalize_headers(df)
         dfs.append(df)
     left_df, right_df = dfs
-    candidates = suggest_mappings(left_df, right_df, sample_n=settings.sample_n)
+    candidates = suggest_mappings(left_df, right_df, sample_n=settings.sample_n, threshold=threshold)
     # mark best pick per left
     best_by_left: dict[str, float] = {}
     for c in candidates:
         key = c["left_column"]
         best_by_left[key] = max(best_by_left.get(key, 0.0), c["confidence"])
+    for c in candidates:
+        if c["confidence"] == best_by_left.get(c["left_column"], -1.0):
+            c["best_pick"] = True
+    # stats
+    auto_count = sum(1 for c in candidates if c["decision"] == "auto")
+    total_pairs = len(candidates)
+    review_count = total_pairs - auto_count
+    auto_pct = round((auto_count / max(1, total_pairs)) * 100.0, 1)
+    est_minutes_saved = round((auto_count * settings.review_seconds_per_field) / 60.0, 1)
     # echo run and threshold
     run_id = getattr(request.state, "run_id", None)
-    resp = MatchResponse(
-        candidates=[CandidateMapping.model_validate(c) for c in candidates],
-        threshold=settings.match_auto_threshold,
-        run_id=run_id,
-    )
-    # Fast path: we cannot set best_pick on model, but frontend can infer by max confidence per left
     add_input_files(run_id, inputs_meta)
-    return resp
+    return MatchResponse(
+        candidates=[CandidateMapping.model_validate(c) for c in candidates],
+        threshold=threshold if threshold is not None else settings.match_auto_threshold,
+        run_id=run_id,
+        stats={
+            "total_pairs": float(total_pairs),
+            "auto_count": float(auto_count),
+            "review_count": float(review_count),
+            "auto_pct": float(auto_pct),
+            "estimated_minutes_saved": float(est_minutes_saved),
+        },
+    )
 
 
 @router.post("/merge", dependencies=[Depends(require_api_key)])
