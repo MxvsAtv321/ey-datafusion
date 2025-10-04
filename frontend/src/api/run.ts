@@ -1,15 +1,19 @@
 import { useMutation } from "@tanstack/react-query";
 import { RunInfo } from "@/types/run";
-import { MockService } from "./MockService";
-
-const isMockMode = true; // Force mock mode for debugging
+// Optional mock service only when VITE_MOCK=1
+const isMockMode = (import.meta as any)?.env?.VITE_MOCK === "1";
+let MockService: any;
+if (isMockMode) {
+  // dynamic import so production bundles without mock do not include it
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  MockService = await import("./MockService").then(m => m.MockService);
+}
 
 export const useStartRun = () => {
   return useMutation({
     mutationFn: async (actionKey?: string): Promise<RunInfo> => {
-      if (isMockMode) {
-        return MockService.startRun(actionKey);
-      }
+      if (isMockMode && MockService) return MockService.startRun(actionKey);
       
       const response = await fetch("/api/run/start", {
         method: "POST",
