@@ -13,6 +13,7 @@ from ..schemas.merge import MappingDecision
 from ..services.validate import run_validation
 from ..schemas.validate import ValidateResponse
 from ..services.docs import generate_docs
+from ..services.db import create_run, complete_run, get_run
 from ..services.templates import save_template, apply_template
 from ..services.drift import drift_between
 
@@ -118,16 +119,22 @@ async def templates_apply(payload: dict = Body(...)):
 
 @router.post("/runs/start", dependencies=[Depends(require_api_key)])
 async def runs_start():
-    return {"run_id": "stub-run", "started_at": "1970-01-01T00:00:00Z"}
+    import uuid
+    run_id = str(uuid.uuid4())
+    return create_run(run_id)
 
 
 @router.post("/runs/complete", dependencies=[Depends(require_api_key)])
 async def runs_complete(payload: dict = Body(...)):
-    return {"run_id": payload.get("run_id", "stub-run"), "status": payload.get("status", "ok"), "artifacts": []}
+    run_id = payload.get("run_id")
+    status = payload.get("status", "ok")
+    artifacts = payload.get("artifacts", [])
+    return complete_run(run_id, status, artifacts)
 
 
 @router.get("/runs/{run_id}", dependencies=[Depends(require_api_key)])
 async def runs_get(run_id: str):
-    return {"run_id": run_id}
+    data = get_run(run_id)
+    return data or {"run_id": run_id, "status": "unknown"}
 
 
