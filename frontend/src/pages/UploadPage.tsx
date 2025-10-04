@@ -10,8 +10,18 @@ import { cn } from "@/lib/utils";
 
 export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { files, setFiles, setProfiles, setCurrentStep } = useStore();
+  const [isLoadingBank1, setIsLoadingBank1] = useState(false);
+  const [isLoadingBank2, setIsLoadingBank2] = useState(false);
+  const { 
+    bank1Files, 
+    bank2Files, 
+    addBank1Files, 
+    addBank2Files, 
+    removeBank1File, 
+    removeBank2File, 
+    setProfiles, 
+    setCurrentStep 
+  } = useStore();
   const navigate = useNavigate();
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -24,7 +34,7 @@ export default function UploadPage() {
     }
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent, bank: 'bank1' | 'bank2') => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
@@ -36,26 +46,35 @@ export default function UploadPage() {
           file.name.endsWith(".xlsx") ||
           file.name.endsWith(".json")
       );
-      setFiles([...files, ...newFiles]);
+      
+      if (bank === 'bank1') {
+        addBank1Files(newFiles);
+      } else {
+        addBank2Files(newFiles);
+      }
     }
-  }, [files, setFiles]);
+  }, [addBank1Files, addBank2Files]);
 
-  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>, bank: 'bank1' | 'bank2') => {
     if (e.target.files && e.target.files[0]) {
       const newFiles = Array.from(e.target.files);
-      setFiles([...files, ...newFiles]);
+      
+      if (bank === 'bank1') {
+        addBank1Files(newFiles);
+      } else {
+        addBank2Files(newFiles);
+      }
     }
   };
 
-  const removeFile = (index: number) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
-
-  const handleProfile = async () => {
-    if (files.length === 0) {
+  const handleProfile = async (bank: 'bank1' | 'bank2') => {
+    const filesToProfile = bank === 'bank1' ? bank1Files : bank2Files;
+    const setIsLoading = bank === 'bank1' ? setIsLoadingBank1 : setIsLoadingBank2;
+    
+    if (filesToProfile.length === 0) {
       toast({
         title: "No files selected",
-        description: "Please upload at least one file to profile",
+        description: `Please upload at least one file to ${bank === 'bank1' ? 'Bank 1' : 'Bank 2'} to profile`,
         variant: "destructive",
       });
       return;
@@ -63,13 +82,13 @@ export default function UploadPage() {
 
     setIsLoading(true);
     try {
-      const result = await api.profile(files);
+      const result = await api.profile(filesToProfile);
       setProfiles(result.profiles);
       setCurrentStep(1);
       navigate("/profile");
       toast({
         title: "✅ Profiling complete",
-        description: `Successfully profiled ${Object.keys(result.profiles).length} files`,
+        description: `Successfully profiled ${Object.keys(result.profiles).length} files from ${bank === 'bank1' ? 'Bank 1' : 'Bank 2'}`,
       });
     } catch (error) {
       toast({
@@ -106,7 +125,7 @@ export default function UploadPage() {
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
-                onDrop={handleDrop}
+                onDrop={(e) => handleDrop(e, 'bank1')}
                 className={cn(
                   "relative flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
                   dragActive
@@ -118,7 +137,7 @@ export default function UploadPage() {
                   type="file"
                   multiple
                   accept=".csv,.xlsx,.json"
-                  onChange={handleFileInput}
+                  onChange={(e) => handleFileInput(e, 'bank1')}
                   className="absolute inset-0 cursor-pointer opacity-0"
                   aria-label="Bank 1 file upload"
                 />
@@ -133,14 +152,14 @@ export default function UploadPage() {
             </CardContent>
           </Card>
 
-          {files.length > 0 && (
+          {bank1Files.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Selected Files ({files.length})</CardTitle>
+                <CardTitle className="text-lg">Bank 1 Selected Files ({bank1Files.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <ul className="space-y-2">
-                  {files.map((file, idx) => (
+                  {bank1Files.map((file, idx) => (
                     <li
                       key={idx}
                       className="flex items-center justify-between rounded-md border p-3"
@@ -157,7 +176,7 @@ export default function UploadPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => removeFile(idx)}
+                        onClick={() => removeBank1File(idx)}
                         aria-label={`Remove ${file.name}`}
                       >
                         <X className="h-4 w-4" />
@@ -170,12 +189,12 @@ export default function UploadPage() {
           )}
 
           <Button
-            onClick={handleProfile}
-            disabled={files.length === 0 || isLoading}
+            onClick={() => handleProfile('bank1')}
+            disabled={bank1Files.length === 0 || isLoadingBank1}
             size="lg"
             className="w-full"
           >
-            {isLoading ? "Profiling..." : "Profile Selected Files"}
+            {isLoadingBank1 ? "Profiling..." : "Profile Bank 1 Files"}
           </Button>
         </div>
 
@@ -193,7 +212,7 @@ export default function UploadPage() {
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
-                onDrop={handleDrop}
+                onDrop={(e) => handleDrop(e, 'bank2')}
                 className={cn(
                   "relative flex min-h-[300px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
                   dragActive
@@ -205,7 +224,7 @@ export default function UploadPage() {
                   type="file"
                   multiple
                   accept=".csv,.xlsx,.json"
-                  onChange={handleFileInput}
+                  onChange={(e) => handleFileInput(e, 'bank2')}
                   className="absolute inset-0 cursor-pointer opacity-0"
                   aria-label="Bank 2 file upload"
                 />
@@ -220,13 +239,49 @@ export default function UploadPage() {
             </CardContent>
           </Card>
 
+          {bank2Files.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Bank 2 Selected Files ({bank2Files.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {bank2Files.map((file, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-center justify-between rounded-md border p-3"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FileText className="h-5 w-5 flex-shrink-0 text-primary" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {(file.size / 1024).toFixed(1)} KB
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeBank2File(idx)}
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
           <Button
-            onClick={handleProfile}
-            disabled={files.length === 0 || isLoading}
+            onClick={() => handleProfile('bank2')}
+            disabled={bank2Files.length === 0 || isLoadingBank2}
             size="lg"
             className="w-full"
           >
-            {isLoading ? "Profiling..." : "Profile Selected Files"}
+            {isLoadingBank2 ? "Profiling..." : "Profile Bank 2 Files"}
           </Button>
         </div>
       </div>

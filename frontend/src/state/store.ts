@@ -9,6 +9,8 @@ import {
 interface AppState {
   // Data
   files: File[];
+  bank1Files: File[];
+  bank2Files: File[];
   profiles: Record<string, TableProfile>;
   candidates: CandidateMapping[];
   decisions: MappingDecision[];
@@ -39,6 +41,12 @@ interface AppState {
 
   // Actions
   setFiles: (files: File[]) => void;
+  setBank1Files: (files: File[]) => void;
+  setBank2Files: (files: File[]) => void;
+  addBank1Files: (files: File[]) => void;
+  addBank2Files: (files: File[]) => void;
+  removeBank1File: (index: number) => void;
+  removeBank2File: (index: number) => void;
   setProfiles: (profiles: Record<string, TableProfile>) => void;
   setCandidates: (candidates: CandidateMapping[]) => void;
   setDecisions: (decisions: MappingDecision[]) => void;
@@ -56,6 +64,8 @@ interface AppState {
 
 export const useStore = create<AppState>((set) => ({
   files: [],
+  bank1Files: [],
+  bank2Files: [],
   profiles: {},
   candidates: [],
   decisions: [],
@@ -71,6 +81,20 @@ export const useStore = create<AppState>((set) => ({
   currentStep: 0,
 
   setFiles: (files) => set({ files }),
+  setBank1Files: (bank1Files) => set({ bank1Files }),
+  setBank2Files: (bank2Files) => set({ bank2Files }),
+  addBank1Files: (newFiles) =>
+    set((state) => ({ bank1Files: [...state.bank1Files, ...newFiles] })),
+  addBank2Files: (newFiles) =>
+    set((state) => ({ bank2Files: [...state.bank2Files, ...newFiles] })),
+  removeBank1File: (index) =>
+    set((state) => ({
+      bank1Files: state.bank1Files.filter((_, i) => i !== index),
+    })),
+  removeBank2File: (index) =>
+    set((state) => ({
+      bank2Files: state.bank2Files.filter((_, i) => i !== index),
+    })),
   setProfiles: (profiles) => set({ profiles }),
   setCandidates: (candidates) => set({ candidates }),
   setDecisions: (decisions) => set({ decisions }),
@@ -100,6 +124,8 @@ export const useStore = create<AppState>((set) => ({
   reset: () =>
     set({
       files: [],
+      bank1Files: [],
+      bank2Files: [],
       profiles: {},
       candidates: [],
       decisions: [],
