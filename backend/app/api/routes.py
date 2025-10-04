@@ -12,6 +12,9 @@ from ..services.merge import merge_datasets
 from ..schemas.merge import MappingDecision
 from ..services.validate import run_validation
 from ..schemas.validate import ValidateResponse
+from ..services.docs import generate_docs
+from ..services.templates import save_template, apply_template
+from ..services.drift import drift_between
 
 
 router = APIRouter()
@@ -83,22 +86,34 @@ async def validate(payload: dict = Body(...)):
 
 @router.post("/docs", dependencies=[Depends(require_api_key)])
 async def docs(payload: dict = Body(...)):
-    return {"markdown": "# Docs\n", "json": "{}"}
+    manifest = payload.get("mapping", {})
+    run_id = payload.get("run_id", "")
+    threshold = float(payload.get("threshold", settings.match_auto_threshold))
+    md, js = generate_docs(manifest, run_id, threshold)
+    return {"markdown": md, "json": js}
 
 
 @router.post("/drift/check", dependencies=[Depends(require_api_key)])
 async def drift_check(payload: dict = Body(...)):
-    return {"added": [], "removed": [], "renamed": [], "type_changed": [], "nullrate_delta": [], "severity": "info"}
+    baseline = payload.get("baseline", {})
+    current = payload.get("current", {})
+    return drift_between(baseline, current)
 
 
 @router.post("/templates/save", dependencies=[Depends(require_api_key)])
 async def templates_save(payload: dict = Body(...)):
-    return {"template_id": "stub"}
+    name = payload.get("name", "default")
+    manifest = payload.get("manifest", {})
+    snapshot = payload.get("profile_snapshot", {})
+    tid = save_template(name, manifest, snapshot)
+    return {"template_id": tid}
 
 
 @router.post("/templates/apply", dependencies=[Depends(require_api_key)])
 async def templates_apply(payload: dict = Body(...)):
-    return {"decisions": [], "notes": []}
+    name = payload.get("name", "default")
+    current = payload.get("current_profile", {})
+    return apply_template(name, current)
 
 
 @router.post("/runs/start", dependencies=[Depends(require_api_key)])
