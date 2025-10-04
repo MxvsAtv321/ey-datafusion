@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { MappingCandidate } from '@/types/mapping';
 import { HelpCircle } from 'lucide-react';
-import { secureMode } from '@/config/app';
 
 interface ExplainPopoverProps {
   candidate: MappingCandidate;
@@ -44,8 +43,8 @@ export const ExplainPopover: React.FC<ExplainPopoverProps> = ({ candidate }) => 
             <div className="space-y-2">
               {candidate.reasons.map((reason, index) => (
                 <div key={index} className="text-sm">
-                  <div className="font-medium text-gray-900">{reason.title}</div>
-                  <div className="text-gray-600">{reason.detail}</div>
+                  <div className="font-medium text-gray-900">{reason.title || reason}</div>
+                  {reason.detail && <div className="text-gray-600">{reason.detail}</div>}
                 </div>
               ))}
             </div>
@@ -63,11 +62,6 @@ export const ExplainPopover: React.FC<ExplainPopoverProps> = ({ candidate }) => 
                   </div>
                 ))}
               </div>
-              {secureMode && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Examples may be masked in Secure Mode.
-                </p>
-              )}
             </div>
           )}
         </div>
