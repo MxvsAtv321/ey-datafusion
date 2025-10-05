@@ -42,9 +42,9 @@ def drift_between(baseline: Dict[str, Any], current: Dict[str, Any]):
 
     # severity
     sev = "info"
-    if type_changed or any(abs(x.get("delta", 0)) > settings.drift_crit_delta for x in nullrate_delta):
+    if type_changed or any(abs(x.get("delta", 0)) >= settings.drift_crit_delta for x in nullrate_delta):
         sev = "critical"
-    elif any(abs(x.get("delta", 0)) > settings.drift_warn_delta for x in nullrate_delta):
+    elif any(abs(x.get("delta", 0)) >= settings.drift_warn_delta for x in nullrate_delta):
         sev = "warning"
 
     return {

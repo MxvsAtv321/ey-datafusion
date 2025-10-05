@@ -103,7 +103,7 @@ async def match(request: Request, files: List[UploadFile] = File(...), threshold
 
 
 @router.post("/merge", dependencies=[Depends(require_api_key)])
-async def merge(request: Request, files: List[UploadFile] = File(...), decisions: str | None = Form(default=None), limit: int = Query(default=settings.merge_preview_default, ge=1, le=settings.merge_preview_max), entity_resolution: str | None = Query(default=None)):
+async def merge(request: Request, files: List[UploadFile] = File(...), decisions: str | None = Form(default=None), limit: int | None = Query(default=None, ge=1), entity_resolution: str | None = Query(default=None)):
     if len(files) != 2:
         raise HTTPException(status_code=400, detail="Provide exactly two files (left and right).")
     dfs = []
@@ -126,7 +126,13 @@ async def merge(request: Request, files: List[UploadFile] = File(...), decisions
     er_stats = None
     if entity_resolution == "customers_v1":
         merged, er_stats = er_lite_customers(merged)
-    preview = merged.head(limit)
+    # Apply runtime default/cap for limit from settings
+    # fetch settings at call-time to honor env changes in tests
+    from app.core.config import settings as cfg_settings
+    eff_limit = limit if limit is not None else cfg_settings.merge_preview_default
+    if eff_limit > cfg_settings.merge_preview_max:
+        raise HTTPException(status_code=422, detail=f"limit exceeds max {settings.merge_preview_max}")
+    preview = merged.head(eff_limit)
     # sanitize NaN/inf for JSON compliance
     import numpy as np
     tmp = preview.replace([np.inf, -np.inf], None)
