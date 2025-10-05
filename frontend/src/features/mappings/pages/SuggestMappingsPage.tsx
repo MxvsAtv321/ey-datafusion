@@ -19,6 +19,7 @@ export const SuggestMappingsPage: React.FC = () => {
   const { files, setCandidates } = useStore();
   const bank1Files = useStore(s => s.bank1Files);
   const bank2Files = useStore(s => s.bank2Files);
+  const chosenFor = useStore(s => s.chosenFor);
   const setFiles = useStore(s => s.setFiles);
   const [threshold, setThreshold] = useState(0.70);
   const [decisions, setDecisions] = useState<Map<string, MappingDecision>>(new Map());
@@ -48,14 +49,6 @@ export const SuggestMappingsPage: React.FC = () => {
       } as MappingCandidate;
     });
   }, [candidatesFromStore]);
-  // Ensure we have a 2-file pair in store when entering the page
-  useEffect(() => {
-    if ((!files || files.length < 2) && bank1Files && bank2Files && bank1Files.length > 0 && bank2Files.length > 0) {
-      setFiles([bank1Files[0], bank2Files[0]]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bank1Files?.length, bank2Files?.length]);
-
 
   useEffect(() => {
     if (uiCandidates && uiCandidates.length > 0) {
@@ -74,13 +67,20 @@ export const SuggestMappingsPage: React.FC = () => {
     estMinutesSaved: stats ? stats.estimated_minutes_saved : 0,
   }), [threshold, stats]);
 
-  // Initial fetch on mount or when files pair becomes available
+  // Ensure we have a 2-file pair in store when entering the page, based on chosen pairing
   useEffect(() => {
-    if (!candidatesFromStore || candidatesFromStore.length === 0) {
-      fetchMatches(threshold);
+    const leftName = bank1Files[0]?.name;
+    if (!leftName) return;
+    const rightName = chosenFor(leftName);
+    if (rightName) {
+      const leftFile = bank1Files.find(f => f.name === leftName) || bank1Files[0];
+      const rightFile = bank2Files.find(f => f.name === rightName) || bank2Files[0];
+      if (leftFile && rightFile) setFiles([leftFile, rightFile]);
+    } else if ((!files || files.length < 2) && bank1Files[0] && bank2Files[0]) {
+      setFiles([bank1Files[0], bank2Files[0]]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files?.length]);
+  }, [bank1Files?.length, bank2Files?.length]);
 
   const fetchMatches = async (t: number) => {
     if (!files || files.length === 0) return;
@@ -94,6 +94,13 @@ export const SuggestMappingsPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!uiCandidates || uiCandidates.length === 0 && files && files.length === 2) {
+      fetchMatches(threshold);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files?.length]);
 
   const onThresholdChange = (t: number) => {
     setThreshold(t);
@@ -177,7 +184,7 @@ export const SuggestMappingsPage: React.FC = () => {
           <CardTitle className="text-lg">Suggested Mappings</CardTitle>
         </CardHeader>
         <CardContent>
-          <SuggestedMappingsTable candidates={uiCandidates} threshold={threshold} decisions={decisions} onDecisionChange={handleDecisionChange} />
+          <SuggestedMappingsTable candidates={uiCandidates as unknown as MappingCandidate[]} threshold={threshold} decisions={decisions} onDecisionChange={handleDecisionChange} />
         </CardContent>
       </Card>
 

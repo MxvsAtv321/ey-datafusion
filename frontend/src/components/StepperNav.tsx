@@ -6,9 +6,10 @@ import { useNavigate, useLocation } from "react-router-dom";
 const steps = [
   { id: 0, name: "Upload", icon: Upload, path: "/" },
   { id: 1, name: "Profile", icon: FileText, path: "/profile" },
-  { id: 2, name: "Mapping", icon: GitMerge, path: "/mapping" },
-  { id: 3, name: "Merge & Validate", icon: CheckCircle, path: "/merge-validate" },
-  { id: 4, name: "Export", icon: FileDown, path: "/export" },
+  { id: 2, name: "Pairing", icon: GitMerge, path: "/pair" },
+  { id: 3, name: "Mapping", icon: GitMerge, path: "/mapping" },
+  { id: 4, name: "Merge & Validate", icon: CheckCircle, path: "/merge-validate" },
+  { id: 5, name: "Export", icon: FileDown, path: "/export" },
 ];
 
 export const StepperNav = () => {
@@ -21,9 +22,10 @@ export const StepperNav = () => {
     const pathname = location.pathname;
     if (pathname === "/" || pathname === "/upload-profile") return 0;
     if (pathname === "/profile") return 1;
-    if (pathname === "/mapping" || pathname === "/mappings/suggest") return 2;
-    if (pathname === "/merge-validate") return 3;
-    if (pathname === "/export") return 4;
+    if (pathname === "/pair") return 2;
+    if (pathname === "/mapping" || pathname === "/mappings/suggest") return 3;
+    if (pathname === "/merge-validate") return 4;
+    if (pathname === "/export") return 5;
     return 0; // default to first step
   };
 
@@ -39,6 +41,7 @@ export const StepperNav = () => {
   const isActive = (path: string) => {
     if (path === "/" && location.pathname === "/") return true;
     if (path === "/profile" && location.pathname === "/profile") return true;
+    if (path === "/pair" && location.pathname === "/pair") return true;
     if (path === "/mapping" && (location.pathname === "/mapping" || location.pathname === "/mappings/suggest")) return true;
     if (path === "/merge-validate" && location.pathname === "/merge-validate") return true;
     if (path === "/export" && location.pathname === "/export") return true;

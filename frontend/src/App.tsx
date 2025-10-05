@@ -13,6 +13,7 @@ import NotFound from "./pages/NotFound";
 import { UploadProfilePage } from "./features/uploadProfile";
 import { SuggestMappingsPage } from "./features/mappings";
 import { MergeValidatePage } from "./features/mergeValidate";
+import PairingPage from "./features/pairing/PairingPage";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,7 @@ const App = () => (
                 <Route path="/" element={<UploadProfilePage />} />
                 <Route path="/upload-profile" element={<UploadProfilePage />} />
                 <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/pair" element={<PairingPage />} />
                 <Route path="/mapping" element={<SuggestMappingsPage />} />
                 <Route path="/mappings/suggest" element={<SuggestMappingsPage />} />
                 <Route path="/merge-validate" element={<MergeValidatePage />} />
