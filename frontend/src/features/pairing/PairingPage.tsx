@@ -4,10 +4,11 @@ import { api } from "@/api/client";
 import type { Pair } from "@/types/pairing";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import PairTable from "./components/PairTable";
+import MatrixHeatmap from "./components/MatrixHeatmap";
 
 export default function PairingPage() {
-  const { profiles, setPairings, pairings, acceptAll, setMatrix } = useStore();
+  const { profiles, setPairings, pairings, acceptAll, setMatrix, pairingMatrix } = useStore();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -43,24 +44,20 @@ export default function PairingPage() {
           <CardTitle>Proposed Pairs ({pairings.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? <div>Loading...</div> : (
-            <div className="space-y-2">
-              {pairings.map((p) => (
-                <div key={`${p.left_table}:${p.right_table}`} className="flex items-center justify-between border rounded-md p-3">
-                  <div>
-                    <div className="font-medium">{p.left_table} → {p.right_table}</div>
-                    <div className="text-xs text-muted-foreground">{p.entity_type} • {p.reasons.slice(0,2).join("; ")}</div>
-                  </div>
-                  <div className="flex items-center gap-2 min-w-[220px]">
-                    <Progress value={Math.round(p.score * 100)} className="h-2" />
-                    <span className="text-sm font-mono w-12 text-right">{Math.round(p.score * 100)}%</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          {loading ? <div>Loading...</div> : <PairTable pairs={pairings} />}
         </CardContent>
       </Card>
+
+      {pairingMatrix && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Similarity Matrix</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MatrixHeatmap matrix={pairingMatrix} />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
