@@ -55,6 +55,11 @@ export const UploadProfilePage = () => {
   };
 
   const handleStartRun = async () => {
+    // Prevent multiple simultaneous runs
+    if (startRunMutation.isPending || profileMutation.isPending) {
+      return;
+    }
+
     if (bankAFiles.length === 0 || bankBFiles.length === 0) {
       toast({
         title: "Missing files",
@@ -77,6 +82,12 @@ export const UploadProfilePage = () => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && canStartRun && !isRunning) {
+      handleStartRun();
+    }
+  };
+
   const handleCopyRunId = async () => {
     if (runId) {
       await navigator.clipboard.writeText(runId);
@@ -87,6 +98,7 @@ export const UploadProfilePage = () => {
   };
 
   const canStartRun = bankAFiles.length > 0 && bankBFiles.length > 0;
+  const isRunning = startRunMutation.isPending || profileMutation.isPending;
 
   return (
     <div className="container max-w-7xl p-6 space-y-6">
@@ -109,20 +121,29 @@ export const UploadProfilePage = () => {
         <CardContent className="pt-6">
           <div className="space-y-2">
             <Label htmlFor="action-key">Action Key (optional)</Label>
-            <Input id="action-key" type="password" placeholder="Enter action key if required" value={actionKey} onChange={(e) => setActionKey(e.target.value)} data-testid="action-key-input" />
+            <p className="text-xs text-muted-foreground">Press Enter to start the run</p>
+            <Input 
+              id="action-key" 
+              type="password" 
+              placeholder="Enter action key if required" 
+              value={actionKey} 
+              onChange={(e) => setActionKey(e.target.value)}
+              onKeyDown={handleKeyDown}
+              data-testid="action-key-input" 
+            />
           </div>
         </CardContent>
       </Card>
 
       {/* Start Run Button */}
       <div className="flex justify-center">
-        <Button onClick={handleStartRun} disabled={!canStartRun || startRunMutation.isPending} size="lg" data-testid="start-run">
-          {startRunMutation.isPending ? (<><div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />Starting Run...</>) : (<><Play className="w-4 h-4 mr-2" />Start Run</>)}
+        <Button onClick={handleStartRun} disabled={!canStartRun || isRunning} size="lg" data-testid="start-run">
+          {isRunning ? (<><div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />Starting Run...</>) : (<><Play className="w-4 h-4 mr-2" />Start Run</>)}
         </Button>
       </div>
 
       {/* Run ID Display */}
-      {runId && !startRunMutation.isPending && !profileMutation.isPending && (
+      {runId && !isRunning && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
