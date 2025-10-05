@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Iterator, Optional, List, Dict, Any
 
 from sqlalchemy import create_engine, String, Integer, DateTime, Text
+from pathlib import Path
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker, Session
 
 from ..core.config import settings
@@ -45,8 +46,19 @@ class Template(Base):
     content_json: Mapped[str] = mapped_column(Text)
 
 
-_dsn = settings.db_dsn or "sqlite:///./ey_datafusion.db"
-engine = create_engine(_dsn, future=True)
+# Compute a stable, absolute SQLite path by default (under backend/)
+if settings.db_dsn:
+    _dsn = settings.db_dsn
+else:
+    backend_dir = Path(__file__).resolve().parents[2]  # .../backend
+    db_path = backend_dir / "ey_datafusion.db"
+    _dsn = f"sqlite:///{db_path}"
+
+# Allow cross-thread usage for SQLite in async/server contexts
+if _dsn.startswith("sqlite"):
+    engine = create_engine(_dsn, future=True, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(_dsn, future=True)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
 
