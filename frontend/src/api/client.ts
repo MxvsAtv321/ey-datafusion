@@ -119,6 +119,18 @@ export const api = {
     const { data } = await client.post("/runs/complete", { run_id: runId, status, artifacts: artifacts || [] });
     return data;
   },
+
+  pair: async (
+    left: { tables: TableProfile[] },
+    right: { tables: TableProfile[] },
+    opts?: { min_score?: number; mode?: "strict"|"balanced"|"lenient" }
+  ) => {
+    const body: any = { left, right };
+    if (opts?.min_score !== undefined) body.min_score = opts.min_score;
+    if (opts?.mode) body.mode = opts.mode;
+    const { data } = await client.post("/pair", body);
+    return data;
+  }
 };
 
 export default client;

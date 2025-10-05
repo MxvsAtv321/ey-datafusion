@@ -6,6 +6,7 @@ import {
   ValidateResponse,
 } from "@/api/types";
 import { api } from "@/api/client";
+import type { Pair, PairingMatrix } from "@/types/pairing";
 
 export type Health = {
   service: string;
@@ -37,6 +38,16 @@ interface AppState {
     json?: string;
   };
   baselineProfile?: TableProfile;
+
+  // Pairing
+  pairings: Pair[];
+  pairingMatrix?: PairingMatrix;
+  unpairedLeft: string[];
+  unpairedRight: string[];
+  setPairings: (p: Pair[]) => void;
+  setMatrix: (m?: PairingMatrix) => void;
+  chosenFor: (leftTable: string) => string | null;
+  acceptAll: () => void;
 
   // Health cache
   health: Health | null;
@@ -91,6 +102,19 @@ export const useStore = create<AppState>((set, get) => ({
   violations: undefined,
   manifest: undefined,
   baselineProfile: undefined,
+  // pairing defaults
+  pairings: [],
+  pairingMatrix: undefined,
+  unpairedLeft: [],
+  unpairedRight: [],
+  setPairings: (p) => set({ pairings: p }),
+  setMatrix: (m) => set({ pairingMatrix: m }),
+  chosenFor: (left) => {
+    const p = get().pairings.find(x => x.left_table === left);
+    return p ? p.right_table : null;
+    },
+  acceptAll: () => set((s) => ({ pairings: s.pairings.map(p => ({ ...p, decision: "auto" })) })),
+
   health: null,
   healthLoading: false,
   healthError: null,
@@ -212,5 +236,9 @@ export const useStore = create<AppState>((set, get) => ({
       violations: undefined,
       manifest: undefined,
       currentStep: 0,
+      pairings: [],
+      pairingMatrix: undefined,
+      unpairedLeft: [],
+      unpairedRight: [],
     }),
 }));
