@@ -21,6 +21,7 @@ from ..services.db import create_run, complete_run, get_run
 from ..services.templates import save_template, apply_template
 from ..services.drift import drift_between
 from ..services.copilot import triage as copilot_triage, fixit as copilot_fixit
+from ..routers.agent_verify import router as agent_verify_router
 
 
 router = APIRouter()
@@ -271,4 +272,7 @@ async def copilot_fixit_endpoint(payload: dict = Body(...)):
     validate_result = payload.get("validate_result", {})
     return copilot_fixit(validate_result)
 
+
+# Agent Verify router
+router.include_router(agent_verify_router, prefix="")
 
