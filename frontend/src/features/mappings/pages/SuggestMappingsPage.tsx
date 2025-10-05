@@ -105,12 +105,17 @@ export const SuggestMappingsPage: React.FC = () => {
     }
   };
 
+  const filesKey = useMemo(() => {
+    if (!files || files.length !== 2) return "";
+    return `${files[0].name}|${files[1].name}`;
+  }, [files]);
+
   useEffect(() => {
-    if (!uiCandidates || uiCandidates.length === 0 && files && files.length === 2) {
+    if (files && files.length === 2) {
       fetchMatches(threshold);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [files?.length]);
+  }, [filesKey]);
 
   const onThresholdChange = (t: number) => {
     setThreshold(t);
