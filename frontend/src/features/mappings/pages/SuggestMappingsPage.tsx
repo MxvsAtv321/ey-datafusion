@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { api } from "@/api/client";
 import { useStore } from "@/state/store";
-import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
-import { suggestMappings } from '@/api/mappings';
 import { MappingCandidate, MappingDecision, ThresholdStats } from '@/types/mapping';
 import { ThresholdSlider } from '../components/ThresholdSlider';
 import { ImpactMeter, calculateThresholdStats } from '../components/ImpactMeter';
@@ -25,24 +23,19 @@ export const SuggestMappingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const debounceTimer = useRef<number | undefined>(undefined);
 
-  // Get runId from navigation state or global store
-  const runId = 'RUN-20251004-1015-9f3a';
-
-  const { data: suggestData, isLoading, error } = useQuery({
-    queryKey: ['suggestMappings', runId],
-    queryFn: () => suggestMappings(runId),
-    enabled: !!runId,
-  });
+  // Candidates from server are stored in global store after api.match
+  const candidatesFromStore = useStore(s => s.candidates);
 
   useEffect(() => {
-    if (suggestData?.candidates) {
+    if (candidatesFromStore && candidatesFromStore.length > 0) {
       const newDecisions = new Map<string, MappingDecision>();
-      suggestData.candidates.forEach(candidate => {
-        newDecisions.set(candidate.id, 'pending');
+      (candidatesFromStore as any[]).forEach((candidate: any, idx: number) => {
+        const id = (candidate as any).id ?? `${candidate.left_column}:${candidate.right_column}:${idx}`;
+        newDecisions.set(id, 'pending');
       });
       setDecisions(newDecisions);
     }
-  }, [suggestData?.candidates]);
+  }, [candidatesFromStore]);
 
   const thresholdStats: ThresholdStats = useMemo(() => ({
     threshold,
@@ -78,23 +71,21 @@ export const SuggestMappingsPage: React.FC = () => {
   };
 
   const handleSelectAllAboveThreshold = () => {
-    if (!suggestData?.candidates) return;
+    if (!candidatesFromStore || candidatesFromStore.length === 0) return;
     const newDecisions = new Map(decisions);
-    suggestData.candidates.forEach(candidate => {
-      if (candidate.confidence >= threshold) {
-        newDecisions.set(candidate.id, 'approved');
-      } else {
-        newDecisions.set(candidate.id, 'pending');
-      }
+    (candidatesFromStore as any[]).forEach((candidate: any, idx: number) => {
+      const id = candidate.id ?? `${candidate.left_column}:${candidate.right_column}:${idx}`;
+      if (candidate.confidence >= threshold) newDecisions.set(id, 'approved'); else newDecisions.set(id, 'pending');
     });
     setDecisions(newDecisions);
   };
 
   const handleResetDecisions = () => {
-    if (!suggestData?.candidates) return;
+    if (!candidatesFromStore || candidatesFromStore.length === 0) return;
     const newDecisions = new Map<string, MappingDecision>();
-    suggestData.candidates.forEach(candidate => {
-      newDecisions.set(candidate.id, 'pending');
+    (candidatesFromStore as any[]).forEach((candidate: any, idx: number) => {
+      const id = candidate.id ?? `${candidate.left_column}:${candidate.right_column}:${idx}`;
+      newDecisions.set(id, 'pending');
     });
     setDecisions(newDecisions);
   };
@@ -110,35 +101,7 @@ export const SuggestMappingsPage: React.FC = () => {
 
   const approvedCount = Array.from(decisions.values()).filter(d => d === 'approved').length;
   const canContinue = approvedCount > 0;
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p>Loading mapping suggestions...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error Loading Mappings</h1>
-          <p className="text-gray-600 mb-4">Failed to load mapping suggestions. Please try again.</p>
-          <Button onClick={() => window.location.reload()}>
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!suggestData?.candidates || suggestData.candidates.length === 0) {
+  if (!candidatesFromStore || candidatesFromStore.length === 0) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">
@@ -182,7 +145,7 @@ export const SuggestMappingsPage: React.FC = () => {
           <CardTitle className="text-lg">Suggested Mappings</CardTitle>
         </CardHeader>
         <CardContent>
-          <SuggestedMappingsTable candidates={suggestData.candidates} threshold={threshold} decisions={decisions} onDecisionChange={handleDecisionChange} />
+          <SuggestedMappingsTable candidates={candidatesFromStore as unknown as MappingCandidate[]} threshold={threshold} decisions={decisions} onDecisionChange={handleDecisionChange} />
         </CardContent>
       </Card>
 
