@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { DatasetProfile } from "@/types/profile";
+import { api } from "./client";
 
 const isMockMode = (import.meta as any)?.env?.VITE_MOCK === "1";
 
@@ -10,13 +11,12 @@ export const useProfileDatasets = () => {
         const { MockService } = await import("./MockService");
         return MockService.profileFromFixtures(params.runId, params.bankAFiles, params.bankBFiles);
       }
-      const formData = new FormData();
-      formData.append("runId", params.runId);
-      params.bankAFiles.forEach((file, index) => formData.append(`bankA_${index}`, file));
-      params.bankBFiles.forEach((file, index) => formData.append(`bankB_${index}`, file));
-      const response = await fetch("/api/profile", { method: "POST", body: formData });
-      if (!response.ok) throw new Error("Failed to profile datasets");
-      return response.json();
+      // Backend expects exactly two files; send separately per call
+      const bankAFiles = params.bankAFiles;
+      const bankBFiles = params.bankBFiles;
+      const bankA = await api.profile(bankAFiles, params.runId);
+      const bankB = await api.profile(bankBFiles, params.runId);
+      return { bankA: bankA as unknown as DatasetProfile, bankB: bankB as unknown as DatasetProfile };
     },
   });
 };

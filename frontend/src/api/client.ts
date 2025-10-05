@@ -9,20 +9,28 @@ import {
   TableProfile,
 } from "./types";
 
-const client = axios.create({
-  baseURL: (import.meta as any).env?.VITE_API_BASE || "/api/v1",
-});
+const API_BASE = (import.meta as any).env?.VITE_API_BASE || "/api/v1";
+const API_KEY = (import.meta as any).env?.VITE_API_KEY;
+
+const client = axios.create({ baseURL: API_BASE });
+if (API_KEY) {
+  // Attach API key header for secured deployments (noop if undefined)
+  (client.defaults.headers as any).common = {
+    ...(client.defaults.headers as any).common,
+    "X-API-Key": API_KEY,
+  };
+}
 
 export const api = {
   getHealth: async (): Promise<{ service:string; version:string; regulated_mode:boolean; embeddings_enabled:boolean; masking_policy?: { match_explain:boolean; profile_examples_masked:boolean } } > => {
     const { data } = await client.get("/healthz");
     return data;
   },
-  profile: async (files: File[]): Promise<ProfileResponse> => {
+  profile: async (files: File[], runId?: string): Promise<ProfileResponse> => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     const response = await client.post("/profile", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { "Content-Type": "multipart/form-data", ...(runId ? { "X-Run-Id": runId } : {}) },
     });
     return response.data;
   },
