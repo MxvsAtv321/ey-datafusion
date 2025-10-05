@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, CheckCircle, AlertCircle, Play } from "lucide-react";
 import { useStartRun } from "@/api/run";
+import { useStore } from "@/state/store";
 import { useProfileDatasets } from "@/api/profile";
 import { FilePicker } from "../components/FilePicker";
 import { DatasetProfile } from "@/types/profile";
@@ -35,6 +36,23 @@ export const UploadProfilePage = () => {
 
   const startRunMutation = useStartRun();
   const profileMutation = useProfileDatasets();
+  const setStoreBank1 = useStore((s) => s.setBank1Files);
+  const setStoreBank2 = useStore((s) => s.setBank2Files);
+  const setStoreFiles = useStore((s) => s.setFiles);
+
+  const onChangeBankA = (files: File[]) => {
+    setBankAFiles(files);
+    setStoreBank1(files);
+    const pair = [files[0], bankBFiles[0]].filter(Boolean) as File[];
+    if (pair.length > 0) setStoreFiles(pair);
+  };
+
+  const onChangeBankB = (files: File[]) => {
+    setBankBFiles(files);
+    setStoreBank2(files);
+    const pair = [bankAFiles[0], files[0]].filter(Boolean) as File[];
+    if (pair.length > 0) setStoreFiles(pair);
+  };
 
   const handleStartRun = async () => {
     if (bankAFiles.length === 0 || bankBFiles.length === 0) {
@@ -82,8 +100,8 @@ export const UploadProfilePage = () => {
 
       {/* File Upload Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <FilePicker label="Bank A" accept={[".csv", ".xlsx"]} onChange={setBankAFiles} value={bankAFiles} testId="bankA" maxFiles={8} />
-        <FilePicker label="Bank B" accept={[".csv", ".xlsx"]} onChange={setBankBFiles} value={bankBFiles} testId="bankB" maxFiles={8} />
+        <FilePicker label="Bank A" accept={[".csv", ".xlsx"]} onChange={onChangeBankA} value={bankAFiles} testId="bankA" maxFiles={8} />
+        <FilePicker label="Bank B" accept={[".csv", ".xlsx"]} onChange={onChangeBankB} value={bankBFiles} testId="bankB" maxFiles={8} />
       </div>
 
       {/* Optional Action Key field */}
