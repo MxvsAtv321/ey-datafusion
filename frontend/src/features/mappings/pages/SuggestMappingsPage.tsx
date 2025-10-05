@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
-import { MappingCandidate, MappingDecision, ThresholdStats } from '@/types/mapping';
+import { MappingCandidate, MappingDecision, ThresholdStats, MatchReason, ExamplePair } from '@/types/mapping';
 import { ThresholdSlider } from '../components/ThresholdSlider';
 import { ImpactMeter, calculateThresholdStats } from '../components/ImpactMeter';
 import { SuggestedMappingsTable } from '../components/SuggestedMappingsTable';
@@ -28,6 +28,26 @@ export const SuggestMappingsPage: React.FC = () => {
 
   // Candidates from server are stored in global store after api.match
   const candidatesFromStore = useStore(s => s.candidates);
+
+  const uiCandidates: MappingCandidate[] = useMemo(() => {
+    return (candidatesFromStore || []).map((c: any, idx: number) => {
+      const id = c.id || `${c.left_column}:${c.right_column}:${idx}`;
+      const reasons: MatchReason[] = (c.reasons || []).map((r: any) => ({ title: String(r), detail: "" }));
+      const left: string[] = c.explain?.left_examples || [];
+      const right: string[] = c.explain?.right_examples || [];
+      const pairs: ExamplePair[] = left.slice(0, 3).map((v, i) => ({ from: String(v), to: String(right[i] ?? "") }));
+      return {
+        id,
+        fromDataset: "bankA",
+        toDataset: "bankB",
+        fromColumn: c.left_column,
+        toColumn: c.right_column,
+        confidence: Number(c.confidence ?? 0),
+        reasons,
+        examplePairs: pairs,
+      } as MappingCandidate;
+    });
+  }, [candidatesFromStore]);
   // Ensure we have a 2-file pair in store when entering the page
   useEffect(() => {
     if ((!files || files.length < 2) && bank1Files && bank2Files && bank1Files.length > 0 && bank2Files.length > 0) {
@@ -38,15 +58,12 @@ export const SuggestMappingsPage: React.FC = () => {
 
 
   useEffect(() => {
-    if (candidatesFromStore && candidatesFromStore.length > 0) {
+    if (uiCandidates && uiCandidates.length > 0) {
       const newDecisions = new Map<string, MappingDecision>();
-      (candidatesFromStore as any[]).forEach((candidate: any, idx: number) => {
-        const id = (candidate as any).id ?? `${candidate.left_column}:${candidate.right_column}:${idx}`;
-        newDecisions.set(id, 'pending');
-      });
+      uiCandidates.forEach((candidate) => newDecisions.set(candidate.id, 'pending'));
       setDecisions(newDecisions);
     }
-  }, [candidatesFromStore]);
+  }, [uiCandidates]);
 
   const thresholdStats: ThresholdStats = useMemo(() => ({
     threshold,
@@ -90,22 +107,18 @@ export const SuggestMappingsPage: React.FC = () => {
   };
 
   const handleSelectAllAboveThreshold = () => {
-    if (!candidatesFromStore || candidatesFromStore.length === 0) return;
+    if (!uiCandidates || uiCandidates.length === 0) return;
     const newDecisions = new Map(decisions);
-    (candidatesFromStore as any[]).forEach((candidate: any, idx: number) => {
-      const id = candidate.id ?? `${candidate.left_column}:${candidate.right_column}:${idx}`;
-      if (candidate.confidence >= threshold) newDecisions.set(id, 'approved'); else newDecisions.set(id, 'pending');
+    uiCandidates.forEach((candidate) => {
+      if (candidate.confidence >= threshold) newDecisions.set(candidate.id, 'approved'); else newDecisions.set(candidate.id, 'pending');
     });
     setDecisions(newDecisions);
   };
 
   const handleResetDecisions = () => {
-    if (!candidatesFromStore || candidatesFromStore.length === 0) return;
+    if (!uiCandidates || uiCandidates.length === 0) return;
     const newDecisions = new Map<string, MappingDecision>();
-    (candidatesFromStore as any[]).forEach((candidate: any, idx: number) => {
-      const id = candidate.id ?? `${candidate.left_column}:${candidate.right_column}:${idx}`;
-      newDecisions.set(id, 'pending');
-    });
+    uiCandidates.forEach((candidate) => newDecisions.set(candidate.id, 'pending'));
     setDecisions(newDecisions);
   };
 
@@ -120,7 +133,7 @@ export const SuggestMappingsPage: React.FC = () => {
 
   const approvedCount = Array.from(decisions.values()).filter(d => d === 'approved').length;
   const canContinue = approvedCount > 0;
-  if (!candidatesFromStore || candidatesFromStore.length === 0) {
+  if (!uiCandidates || uiCandidates.length === 0) {
     return (
       <div className="container mx-auto p-6">
         <div className="text-center">
@@ -164,7 +177,7 @@ export const SuggestMappingsPage: React.FC = () => {
           <CardTitle className="text-lg">Suggested Mappings</CardTitle>
         </CardHeader>
         <CardContent>
-          <SuggestedMappingsTable candidates={candidatesFromStore as unknown as MappingCandidate[]} threshold={threshold} decisions={decisions} onDecisionChange={handleDecisionChange} />
+          <SuggestedMappingsTable candidates={uiCandidates} threshold={threshold} decisions={decisions} onDecisionChange={handleDecisionChange} />
         </CardContent>
       </Card>
 
