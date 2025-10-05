@@ -48,7 +48,7 @@ def _infer_family(name: str, tags: List[str]) -> str:
         return "code"
     if any(x in n for x in ["name","fname","lname","first_name","last_name"]):
         return "name"
-    if any(x in n for x in ["id","uuid","guid","accountid","customerid"]):
+    if any(x in n for x in ["id","uuid","guid","accountid","customerid","number","account_number"]):
         return "id"
     return "other"
 

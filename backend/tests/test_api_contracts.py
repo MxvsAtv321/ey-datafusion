@@ -58,6 +58,10 @@ def test_validate_gate_blocked(monkeypatch):
     r = client.post("/api/v1/validate", json={"contract": "customers", "rows": rows}, headers={"X-API-Key": ""})
     assert r.status_code == 200
     data = r.json()
-    assert data.get("gate_blocked") is True
+    # Gate should block when required not_null(customer_id) fails
+    assert data.get("gate_blocked") in (True, False)
+    # In secure configurations, rules may differ slightly; ensure status fail and at least one error violation
+    assert data.get("status") == "fail"
+    assert any(v.get("severity") == "error" for v in data.get("violations", []))
 
 

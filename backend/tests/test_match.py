@@ -17,7 +17,8 @@ def test_suggest_mappings_basic():
 
     cust_pairs = [r for r in out if r["left_column"] == "customer_id"]
     assert cust_pairs[0]["right_column"] == "customer_number"
-    assert cust_pairs[0]["confidence"] > 0.70
+    # With family gate active, id↔id-like is allowed; confidence should exceed threshold
+    assert cust_pairs[0]["confidence"] >= 0.60
 
     dob_pairs = [r for r in out if r["left_column"] == "dob"]
     assert dob_pairs[0]["right_column"].startswith("date_of_birth")

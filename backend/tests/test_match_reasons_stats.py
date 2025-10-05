@@ -22,6 +22,7 @@ def test_match_reasons_stats_high_confidence():
     assert "stats" in data
     stats = data["stats"]
     # We compare at least one auto and zero review for the best exact-match pair
+    # With family gate tuned, acct_id ↔ account_number should auto
     assert int(stats["auto_count"]) >= 1
     assert float(stats["auto_pct"]) == 100.0
     # minutes saved = auto_count * 12 / 60 = 0.2 by default

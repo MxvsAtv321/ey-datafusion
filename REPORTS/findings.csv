@@ -1,0 +1,7 @@
+category,severity,file:line,snippet,issue,fix
+matching,medium,backend/app/services/match.py: +_infer_family,"conf = min(conf, settings.family_gate_cap)",Family gate caps legit id↔id-like pairs,Tune allow-matrix for id/code and raise cap when name+overlap high
+pairing,low,backend/app/services/table_pairing.py: greedy loop,"best = (s, j, rt)",Greedy may pick less intuitive right table,Add entity-bucket Hungarian or tie-break on entity+score
+validation,medium,backend/app/api/routes.py:148-167,"gate = False ...",Gate flag depends on required_rules prefix matching,Align rule IDs or map required_rules to produced rule names
+security,low,backend/app/main.py:43-50,"allow_origins = origins or [""*""]",Ensure CORS not wildcarded in prod,Set ALLOWED_ORIGINS explicitly; default remains safe
+ops,low,backend/app/services/db.py:48-56,"sqlite path + check_same_thread=False",Threading/path issues previously caused 500,Now fixed; keep Postgres in prod via DB_DSN
+frontend,low,frontend/src/features/mappings/pages/SuggestMappingsPage.tsx,"auto assemble files pair",Potential mismatch if filename heuristics fail,Use chosen pairing from store (implemented) and fall back carefully
