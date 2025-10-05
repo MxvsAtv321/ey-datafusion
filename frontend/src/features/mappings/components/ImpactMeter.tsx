@@ -7,8 +7,6 @@ interface ImpactMeterProps {
   stats: ThresholdStats;
 }
 
-// Constant for impact calculation - 20 seconds per manual review
-const REVIEW_SECONDS_PER_MATCH = 20;
 
 export const ImpactMeter: React.FC<ImpactMeterProps> = ({ stats }) => {
   const { autoPct, estMinutesSaved } = stats;
@@ -25,7 +23,7 @@ export const ImpactMeter: React.FC<ImpactMeterProps> = ({ stats }) => {
             <Info className="h-4 w-4 text-gray-400 hover:text-gray-600 cursor-help" />
           </TooltipTrigger>
           <TooltipContent>
-            <p>Estimate assumes ~{REVIEW_SECONDS_PER_MATCH}s manual review per mapping.</p>
+            <p>Minutes saved and auto% are computed by the server for this run.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
