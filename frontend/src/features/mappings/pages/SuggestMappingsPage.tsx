@@ -105,10 +105,11 @@ export const SuggestMappingsPage: React.FC = () => {
     }
   };
 
+  const pairVersion = useStore(s => s.pairVersion);
   const filesKey = useMemo(() => {
     if (!files || files.length !== 2) return "";
-    return `${files[0].name}|${files[1].name}`;
-  }, [files]);
+    return `${files[0].name}|${files[1].name}|v${pairVersion}`;
+  }, [files, pairVersion]);
 
   useEffect(() => {
     if (files && files.length === 2) {

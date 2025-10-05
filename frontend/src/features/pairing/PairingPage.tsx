@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 export default function PairingPage() {
   const navigate = useNavigate();
-  const { profiles, setPairings, pairings, acceptAll, setMatrix, pairingMatrix, setProfiles } = useStore();
+  const { profiles, setPairings, pairings, acceptAll, setMatrix, pairingMatrix, setProfiles, setPair } = useStore();
   const bank1Files = useStore(s => s.bank1Files);
   const bank2Files = useStore(s => s.bank2Files);
   const [loading, setLoading] = useState(false);
@@ -30,6 +30,11 @@ export default function PairingPage() {
         const rightTables = Object.values(rightResp.profiles || {});
         const resp = await api.pair({ tables: leftTables as any }, { tables: rightTables as any }, { mode: "balanced" });
         setPairings(resp.pairs as Pair[]);
+        // Select first auto pair by default
+        if ((resp.pairs || []).length > 0) {
+          const first = resp.pairs[0];
+          setPair(first.left_table, first.right_table);
+        }
         if (resp.matrix) setMatrix(resp.matrix);
       } finally {
         setLoading(false);
@@ -45,7 +50,7 @@ export default function PairingPage() {
           <h1 className="text-3xl font-bold tracking-tight">Table Pairing</h1>
           <p className="text-muted-foreground mt-2">Review auto-proposed pairs before column mapping</p>
         </div>
-        <Button onClick={() => { acceptAll(); navigate('/mapping'); }} disabled={pairings.length === 0 || loading}>Accept All</Button>
+        <Button onClick={() => { acceptAll(); if (pairings.length > 0) setPair(pairings[0].left_table, pairings[0].right_table); navigate('/mapping'); }} disabled={pairings.length === 0 || loading}>Accept All</Button>
       </div>
 
       <Card>

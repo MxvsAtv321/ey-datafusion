@@ -40,11 +40,14 @@ interface AppState {
   baselineProfile?: TableProfile;
 
   // Pairing
+  pair: { leftTable: string; rightTable: string } | null;
+  pairVersion: number;
   pairings: Pair[];
   pairingMatrix?: PairingMatrix;
   unpairedLeft: string[];
   unpairedRight: string[];
   setPairings: (p: Pair[]) => void;
+  setPair: (leftTable: string, rightTable: string) => void;
   setMatrix: (m?: PairingMatrix) => void;
   chosenFor: (leftTable: string) => string | null;
   acceptAll: () => void;
@@ -103,13 +106,26 @@ export const useStore = create<AppState>((set, get) => ({
   manifest: undefined,
   baselineProfile: undefined,
   // pairing defaults
+  pair: null,
+  pairVersion: 0,
   pairings: [],
   pairingMatrix: undefined,
   unpairedLeft: [],
   unpairedRight: [],
   setPairings: (p) => set({ pairings: p }),
+  setPair: (leftTable, rightTable) => set((s) => ({
+    pair: { leftTable, rightTable },
+    pairVersion: s.pairVersion + 1,
+    // reset dependent state
+    candidates: [],
+    decisions: [],
+    violations: undefined,
+    mergedPreview: undefined,
+  })),
   setMatrix: (m) => set({ pairingMatrix: m }),
   chosenFor: (left) => {
+    const sel = get().pair;
+    if (sel && sel.leftTable === left) return sel.rightTable;
     const p = get().pairings.find(x => x.left_table === left);
     return p ? p.right_table : null;
     },
