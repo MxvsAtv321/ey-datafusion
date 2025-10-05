@@ -195,6 +195,7 @@ def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: in
                 # try to infer using simple heuristics over column names
                 lf = _infer_family(lc, [])
                 rf = _infer_family(rc, [])
+                # allow id↔address codes if name similarity and overlap are weak? keep cap
                 if rf not in _FAMILY_COMPAT.get(lf, {lf}):
                     conf = min(conf, settings.family_gate_cap)
                     cap_warn = True
