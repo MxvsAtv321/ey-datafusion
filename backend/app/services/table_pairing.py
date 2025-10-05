@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import List, Dict, Tuple
+import numpy as np
 from app.core.config import settings
 from app.schemas.profile import TableProfile, ColumnProfile
 
@@ -8,6 +9,12 @@ try:
     from rapidfuzz import fuzz
 except Exception:  # pragma: no cover
     fuzz = None
+
+# Optional: Hungarian assignment for globally optimal pairing
+try:  # pragma: no cover - SciPy might not be installed in all environments
+    from scipy.optimize import linear_sum_assignment  # type: ignore
+except Exception:  # pragma: no cover
+    linear_sum_assignment = None
 
 
 def _norm_name(s: str) -> str:
@@ -27,6 +34,17 @@ def _name_sim(a: str, b: str) -> float:
         fuzz.partial_ratio(a1, b1),
     ) / 100.0
 
+
+_STOP_TOKENS = {"bank1","bank2","mock","schema","xlsx","csv","xls"}
+
+def _canonical_table(name: str) -> str:
+    base = name.lower()
+    # strip common separators and extension
+    for ch in [".", "-", "/", "\\", "(", ")"]:
+        base = base.replace(ch, "_")
+    tokens = [t for t in base.replace(".xlsx"," ").replace(".csv"," ").split("_") if t]
+    tokens = [t for t in tokens if t not in _STOP_TOKENS]
+    return "_".join(tokens)
 
 _TAG_VOCAB = [
     "email_like","phone_like","iban_like","date_iso","currency_amount_like",
@@ -80,18 +98,21 @@ def _infer_entity(t: TableProfile) -> str:
     tags = {tag for c in t.columns_profile for tag in c.semantic_tags}
     def has_any(*k: str) -> bool:
         return any(x in n for x in k) or any(x.replace("_like","") in tags for x in k)
+
+    # Order matters: classify specific domains BEFORE generic buckets to avoid mis-bucketing
+    if has_any("loan","interest","principal","amort","emi"):
+        return "loans"  # includes loan_accounts, loan_transactions
     if has_any("customer","fname","lname","email","phone","dob"):
         return "customers"
-    if has_any("account","iban","balance","currency","open_date"):
-        return "accounts"
-    if has_any("loan","interest","principal"):
-        return "loans"
     if has_any("txn","transaction","posted_date","merchant"):
         return "transactions"
     if has_any("address","line1","city","postcode","zip","country"):
         return "addresses"
-    if has_any("identification","passport","national_id"):
+    if has_any("identification","passport","national_id","id_card"):
         return "identifications"
+    # Deposit/current/savings style accounts
+    if has_any("account","iban","balance","currency","open_date","deposit","current","savings","cur","sav","cursav"):
+        return "accounts"
     return "unknown"
 
 
@@ -127,7 +148,7 @@ def _score_pair(l: TableProfile, r: TableProfile) -> Tuple[float, str, List[str]
     return score, (le if le == re else (le if le != "unknown" else re)), reasons, warnings
 
 
-def pair_tables(left: List[TableProfile], right: List[TableProfile], min_score: float | None = None) -> Tuple[List[Dict], List[str], List[str], Dict]:
+def pair_tables(left: List[TableProfile], right: List[TableProfile], min_score: float | None = None, mode: str = "balanced") -> Tuple[List[Dict], List[str], List[str], Dict]:
     L = left
     R = right
     if min_score is None:
@@ -143,36 +164,183 @@ def pair_tables(left: List[TableProfile], right: List[TableProfile], min_score: 
             matrix[i][j] = s
             pair_meta[(i,j)] = (ent, reasons, warnings)
 
-    # Greedy matching with deterministic tie-breakers
-    used_r = set()
     pairs: List[Dict] = []
-    for i, lt in sorted(list(enumerate(L)), key=lambda x: names_l[x[0]].lower()):
-        # pick best r not used
-        best = (-1.0, -1, None)
-        for j, rt in sorted(list(enumerate(R)), key=lambda x: names_r[x[0]].lower()):
-            if j in used_r:
-                continue
-            s = matrix[i][j]
-            if s > best[0] or (abs(s - best[0]) < 1e-9 and names_r[j].lower() < names_r[best[1]].lower() if best[1] != -1 else True):
-                best = (s, j, rt)
-        if best[1] == -1:
+
+    # 0) Lock in exact canonical-name matches first to avoid obvious swaps
+    used_l: set[int] = set()
+    used_r: set[int] = set()
+    canon_left: Dict[str, List[int]] = {}
+    canon_right: Dict[str, List[int]] = {}
+    for i, lt in enumerate(L):
+        canon_left.setdefault(_canonical_table(lt.table), []).append(i)
+    for j, rt in enumerate(R):
+        canon_right.setdefault(_canonical_table(rt.table), []).append(j)
+    for key, li in canon_left.items():
+        rj = canon_right.get(key)
+        if not rj or len(li) != 1 or len(rj) != 1:
             continue
-        used_r.add(best[1])
-        ent, reasons, warnings = pair_meta[(i, best[1])]
-        decision = "auto" if best[0] >= (settings.tablepair_auto_threshold_pct) else "review"
-        pairs.append({
-            "left_table": L[i].table,
-            "right_table": R[best[1]].table,
-            "score": round(best[0], 6),
-            "decision": decision,
-            "entity_type": ent,
-            "reasons": reasons,
-            "warnings": warnings,
-        })
+        i = li[0]
+        j = rj[0]
+        if i in used_l or j in used_r:
+            continue
+        s = float(matrix[i][j])
+        if s >= (min_score or 0.0):
+            ent, reasons, warnings = pair_meta[(i, j)]
+            reasons = list(reasons) + ["Canonical name match"]
+            decision = "auto" if s >= settings.tablepair_auto_threshold_pct else "review"
+            pairs.append({
+                "left_table": L[i].table,
+                "right_table": R[j].table,
+                "score": round(s, 6),
+                "decision": decision,
+                "entity_type": ent,
+                "reasons": reasons,
+                "warnings": warnings,
+            })
+            used_l.add(i)
+            used_r.add(j)
+
+    # 0b) Mutual-top lock-in for high-confidence name matches
+    # Compute top choice indices
+    if len(L) > 0 and len(R) > 0:
+        top_r_for_l = [max(range(len(R)), key=lambda j: matrix[i][j]) if len(R) > 0 else -1 for i in range(len(L))]
+        top_l_for_r = [max(range(len(L)), key=lambda i: matrix[i][j]) if len(L) > 0 else -1 for j in range(len(R))]
+        for i in range(len(L)):
+            if i in used_l: continue
+            j = top_r_for_l[i]
+            if j < 0 or j in used_r: continue
+            if top_l_for_r[j] != i: continue
+            # Require strong table-name similarity to avoid false locks
+            if _name_sim(L[i].table, R[j].table) < 0.8 and _canonical_table(L[i].table) != _canonical_table(R[j].table):
+                continue
+            s = float(matrix[i][j])
+            if s < (min_score or 0.0):
+                continue
+            ent, reasons, warnings = pair_meta[(i, j)]
+            reasons = list(reasons) + ["Mutual top by score"]
+            decision = "auto" if s >= settings.tablepair_auto_threshold_pct else "review"
+            pairs.append({
+                "left_table": L[i].table,
+                "right_table": R[j].table,
+                "score": round(s, 6),
+                "decision": decision,
+                "entity_type": ent,
+                "reasons": reasons,
+                "warnings": warnings,
+            })
+            used_l.add(i)
+            used_r.add(j)
+
+    # Enforce entity-aware pairing: match within same inferred entity first
+    left_by_ent: Dict[str, List[int]] = {}
+    right_by_ent: Dict[str, List[int]] = {}
+    for i, lt in enumerate(L):
+        if i in used_l: continue
+        left_by_ent.setdefault(_infer_entity(lt), []).append(i)
+    for j, rt in enumerate(R):
+        if j in used_r: continue
+        right_by_ent.setdefault(_infer_entity(rt), []).append(j)
+
+    def assign_block(l_idx: List[int], r_idx: List[int]) -> None:
+        if not l_idx or not r_idx:
+            return
+        sub = np.array([[matrix[i][j] for j in r_idx] for i in l_idx], dtype=float)
+        if linear_sum_assignment is not None and sub.size > 0:
+            ls, rs = sub.shape
+            size = max(ls, rs)
+            sq = np.zeros((size, size), dtype=float)
+            sq[:ls, :rs] = sub
+            cost = 1.0 - sq
+            row_ind, col_ind = linear_sum_assignment(cost)
+            for ri, ci in zip(row_ind, col_ind):
+                if ri >= ls or ci >= rs:
+                    continue
+                i = l_idx[ri]
+                j = r_idx[ci]
+                if i in used_l or j in used_r:
+                    continue
+                s = float(matrix[i][j])
+                if s < (min_score or 0.0):
+                    continue
+                ent, reasons, warnings = pair_meta[(i, j)]
+                decision = "auto" if s >= settings.tablepair_auto_threshold_pct else "review"
+                pairs.append({
+                    "left_table": L[i].table,
+                    "right_table": R[j].table,
+                    "score": round(s, 6),
+                    "decision": decision,
+                    "entity_type": ent,
+                    "reasons": reasons,
+                    "warnings": warnings,
+                })
+                used_l.add(i)
+                used_r.add(j)
+        else:
+            # Greedy within block
+            candidates: List[Tuple[float, int, int]] = []
+            for i in l_idx:
+                for j in r_idx:
+                    candidates.append((matrix[i][j], i, j))
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            for s, i, j in candidates:
+                if s < (min_score or 0.0):
+                    break
+                if i in used_l or j in used_r:
+                    continue
+                ent, reasons, warnings = pair_meta[(i, j)]
+                decision = "auto" if s >= settings.tablepair_auto_threshold_pct else "review"
+                pairs.append({
+                    "left_table": L[i].table,
+                    "right_table": R[j].table,
+                    "score": round(float(s), 6),
+                    "decision": decision,
+                    "entity_type": ent,
+                    "reasons": reasons,
+                    "warnings": warnings,
+                })
+                used_l.add(i)
+                used_r.add(j)
+
+    # Same-entity first (skip unknown in strict mode)
+    for ent in sorted(set(left_by_ent.keys()) | set(right_by_ent.keys())):
+        if ent == "unknown" and mode == "strict":
+            continue
+        assign_block(left_by_ent.get(ent, []), right_by_ent.get(ent, []))
+
+    # Cross-entity phase: only if lenient; otherwise, leave unpaired
+    if mode == "lenient":
+        leftovers: List[Tuple[float, int, int]] = []
+        for i in range(len(L)):
+            if i in used_l:
+                continue
+            for j in range(len(R)):
+                if j in used_r:
+                    continue
+                # Penalize cross-entity pairs to prefer within-entity
+                ent_i, _, _ = pair_meta[(i, j)]
+                s = matrix[i][j]
+                leftovers.append((s, i, j))
+        leftovers.sort(key=lambda x: x[0], reverse=True)
+        for s, i, j in leftovers:
+            if s < (min_score or 0.0):
+                break
+            ent, reasons, warnings = pair_meta[(i, j)]
+            decision = "review" if s < settings.tablepair_auto_threshold_pct else "auto"
+            pairs.append({
+                "left_table": L[i].table,
+                "right_table": R[j].table,
+                "score": round(float(s), 6),
+                "decision": decision,
+                "entity_type": ent,
+                "reasons": reasons,
+                "warnings": warnings,
+            })
+            used_l.add(i)
+            used_r.add(j)
 
     paired_left = {p["left_table"] for p in pairs}
     paired_right = {p["right_table"] for p in pairs}
-    unpaired_left = [t.table for t in L if t.table not in paired_left and max(matrix[L.index(t)] or [0.0]) < min_score]
+    unpaired_left = [t.table for t in L if t.table not in paired_left]
     unpaired_right = [t.table for t in R if t.table not in paired_right]
 
     return pairs, unpaired_left, unpaired_right, {"left": names_l, "right": names_r, "scores": matrix}

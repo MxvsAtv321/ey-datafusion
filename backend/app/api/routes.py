@@ -108,7 +108,8 @@ async def match(request: Request, files: List[UploadFile] = File(...), threshold
 @router.post("/pair", response_model=PairResponse, dependencies=[Depends(require_api_key)])
 async def pair(payload: PairRequest):
     min_score = payload.min_score if payload.min_score is not None else settings.tablepair_min_score
-    pairs, ul, ur, matrix = pair_tables(payload.left.tables, payload.right.tables, min_score=min_score)
+    mode = payload.mode or "strict"  # default to strict to avoid cross-entity fallbacks
+    pairs, ul, ur, matrix = pair_tables(payload.left.tables, payload.right.tables, min_score=min_score, mode=mode)
     prs = [PairSuggestion(**p) for p in pairs]
     cfg = PairingSettings(weights={
         "name": settings.tablepair_w_name,
