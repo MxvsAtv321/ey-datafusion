@@ -7,6 +7,9 @@ import {
   DocsResponse,
   MappingDecision,
   TableProfile,
+  HealthzSchema,
+  ProfileResponseSchema,
+  MatchResponseSchema,
 } from "./types";
 
 const API_BASE = (import.meta as any).env?.VITE_API_BASE || "/api/v1";
@@ -24,7 +27,8 @@ if (API_KEY) {
 export const api = {
   getHealth: async (): Promise<{ service:string; version:string; regulated_mode:boolean; embeddings_enabled:boolean; masking_policy?: { match_explain:boolean; profile_examples_masked:boolean } } > => {
     const { data } = await client.get("/healthz");
-    return data;
+    const h = HealthzSchema.parse(data);
+    return { service: h.service, version: h.version, regulated_mode: h.regulated_mode, embeddings_enabled: h.embeddings_enabled, masking_policy: h.masking_policy ?? undefined };
   },
   profile: async (files: File[], runId?: string): Promise<ProfileResponse> => {
     const formData = new FormData();
@@ -32,7 +36,7 @@ export const api = {
     const response = await client.post("/profile", formData, {
       headers: { "Content-Type": "multipart/form-data", ...(runId ? { "X-Run-Id": runId } : {}) },
     });
-    return response.data;
+    return ProfileResponseSchema.parse(response.data) as any;
   },
 
   match: async (files: File[], opts?: { threshold?: number }): Promise<MatchResponse> => {
@@ -42,7 +46,7 @@ export const api = {
     const response = await client.post(url, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return response.data;
+    return MatchResponseSchema.parse(response.data) as any;
   },
 
   merge: async (

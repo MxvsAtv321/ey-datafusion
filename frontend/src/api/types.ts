@@ -124,6 +124,68 @@ export interface DocsResponse {
   json: string;
 }
 
+// zod runtime schemas for API responses (contract validation)
+import { z } from "zod";
+
+export const HealthzSchema = z.object({
+  service: z.string(),
+  version: z.string(),
+  regulated_mode: z.boolean(),
+  embeddings_enabled: z.boolean(),
+  masking_policy: z
+    .object({ match_explain: z.boolean(), profile_examples_masked: z.boolean() })
+    .nullable()
+    .optional(),
+});
+
+export const ProfileResponseSchema = z.object({
+  profiles: z.record(
+    z.object({
+      table: z.string(),
+      rows: z.number(),
+      columns: z.number().optional(),
+      sample_n: z.number().optional(),
+      columns_profile: z
+        .array(
+          z.object({
+            name: z.string(),
+            dtype: z.string(),
+            null_count: z.number().optional(),
+            unique_count_sampled: z.number().optional(),
+            candidate_primary_key_sampled: z.boolean().optional(),
+            examples: z.array(z.string()).optional(),
+            semantic_tags: z.array(z.string()).optional(),
+          })
+        )
+        .optional(),
+    })
+  ),
+  examples_masked: z.boolean().optional(),
+});
+
+export const CandidateSchema = z.object({
+  left_column: z.string(),
+  right_column: z.string(),
+  scores: z.object({ name: z.number(), type: z.number(), value_overlap: z.number(), embedding: z.number() }),
+  confidence: z.number(),
+  decision: z.union([z.literal("auto"), z.literal("review")]),
+  reasons: z.array(z.string()).optional(),
+  warnings: z.array(z.string()).optional(),
+  explain: z
+    .object({ left_examples: z.array(z.string()).optional(), right_examples: z.array(z.string()).optional() })
+    .optional(),
+});
+
+export const MatchResponseSchema = z.object({
+  candidates: z.array(CandidateSchema),
+  threshold: z.number().optional(),
+  run_id: z.string().nullable().optional(),
+  stats: z
+    .object({ total_pairs: z.number(), auto_count: z.number(), review_count: z.number(), auto_pct: z.number(), estimated_minutes_saved: z.number() })
+    .optional(),
+});
+
+
 export interface DriftChange {
   type: "added" | "removed" | "renamed" | "type_changed" | "nullrate_delta";
   from?: string;
