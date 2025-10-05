@@ -20,6 +20,7 @@ export const SuggestMappingsPage: React.FC = () => {
   const bank1Files = useStore(s => s.bank1Files);
   const bank2Files = useStore(s => s.bank2Files);
   const chosenFor = useStore(s => s.chosenFor);
+  const pairings = useStore(s => s.pairings);
   const setFiles = useStore(s => s.setFiles);
   const [threshold, setThreshold] = useState(0.70);
   const [decisions, setDecisions] = useState<Map<string, MappingDecision>>(new Map());
@@ -69,6 +70,12 @@ export const SuggestMappingsPage: React.FC = () => {
 
   // Ensure we have a 2-file pair in store when entering the page, based on chosen pairing
   useEffect(() => {
+    // Hard gate: if no pairings exist yet, send user to Pairing
+    if (!pairings || pairings.length === 0) {
+      toast.info('Complete table pairing first');
+      navigate('/pair');
+      return;
+    }
     const leftName = bank1Files[0]?.name;
     if (!leftName) return;
     const rightName = chosenFor(leftName);
@@ -77,10 +84,13 @@ export const SuggestMappingsPage: React.FC = () => {
       const rightFile = bank2Files.find(f => f.name === rightName) || bank2Files[0];
       if (leftFile && rightFile) setFiles([leftFile, rightFile]);
     } else if ((!files || files.length < 2) && bank1Files[0] && bank2Files[0]) {
-      setFiles([bank1Files[0], bank2Files[0]]);
+      // Fallback: try to pick the same‑name file on the right if present
+      const leftFile = bank1Files[0];
+      const rightSame = bank2Files.find(f => f.name === leftFile.name) || bank2Files[0];
+      setFiles([leftFile, rightSame]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bank1Files?.length, bank2Files?.length]);
+  }, [bank1Files?.length, bank2Files?.length, pairings?.length]);
 
   const fetchMatches = async (t: number) => {
     if (!files || files.length === 0) return;

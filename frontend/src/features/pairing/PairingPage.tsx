@@ -6,19 +6,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import PairTable from "./components/PairTable";
 import MatrixHeatmap from "./components/MatrixHeatmap";
+import { useNavigate } from "react-router-dom";
 
 export default function PairingPage() {
-  const { profiles, setPairings, pairings, acceptAll, setMatrix, pairingMatrix } = useStore();
+  const navigate = useNavigate();
+  const { profiles, setPairings, pairings, acceptAll, setMatrix, pairingMatrix, setProfiles } = useStore();
+  const bank1Files = useStore(s => s.bank1Files);
+  const bank2Files = useStore(s => s.bank2Files);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const run = async () => {
-      if (!profiles || Object.keys(profiles).length === 0) return;
+      if ((bank1Files?.length || 0) === 0 || (bank2Files?.length || 0) === 0) return;
       setLoading(true);
       try {
-        // Split profiles by dataset name heuristic (Bank A on left, Bank B on right)
-        const leftTables = Object.values(profiles).filter((t) => /bank1|banka|bank_?a/i.test(t.table));
-        const rightTables = Object.values(profiles).filter((t) => /bank2|bankb|bank_?b/i.test(t.table));
+        // Profile left and right from the currently selected files
+        const leftResp = await api.profile(bank1Files as File[]);
+        const rightResp = await api.profile(bank2Files as File[]);
+        // Merge into global store for later usage
+        const merged: any = { ...(profiles || {}), ...(leftResp.profiles || {}), ...(rightResp.profiles || {}) };
+        setProfiles(merged);
+        const leftTables = Object.values(leftResp.profiles || {});
+        const rightTables = Object.values(rightResp.profiles || {});
         const resp = await api.pair({ tables: leftTables as any }, { tables: rightTables as any }, { mode: "balanced" });
         setPairings(resp.pairs as Pair[]);
         if (resp.matrix) setMatrix(resp.matrix);
@@ -27,7 +36,7 @@ export default function PairingPage() {
       }
     };
     run();
-  }, [profiles, setPairings, setMatrix]);
+  }, [bank1Files?.length, bank2Files?.length]);
 
   return (
     <div className="container max-w-7xl p-6 space-y-6">
@@ -36,7 +45,7 @@ export default function PairingPage() {
           <h1 className="text-3xl font-bold tracking-tight">Table Pairing</h1>
           <p className="text-muted-foreground mt-2">Review auto-proposed pairs before column mapping</p>
         </div>
-        <Button onClick={acceptAll} disabled={pairings.length === 0 || loading}>Accept All</Button>
+        <Button onClick={() => { acceptAll(); navigate('/mapping'); }} disabled={pairings.length === 0 || loading}>Accept All</Button>
       </div>
 
       <Card>
