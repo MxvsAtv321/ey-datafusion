@@ -1,0 +1,22 @@
+[
+  {
+    "fileName": "merged_accounts.csv",
+    "mimeType": "text/csv",
+    "blob": "YWNjb3VudF9pZCxjdXN0b21lcl9pZCx0eXBlLGJhbGFuY2UsY3JlYXRlZF9hdAoxMjM0LDEwMSxjaGVja2luZyw1MDAwLjAwLDIwMjQtMDEtMTUKMTIzNSwxMDIsc2F2aW5ncywyNTAwLjAwLDIwMjQtMDEtMTUK"
+  },
+  {
+    "fileName": "merged_customers.csv", 
+    "mimeType": "text/csv",
+    "blob": "Y3VzdG9tZXJfaWQsZmlyc3RfbmFtZSxsYXN0X25hbWUsZW1haWwscGhvbmUKMTAxLEpvaG4sRG9lLGpvaG4uZG9lQGV4YW1wbGUuY29tLDU1NS0wMTIzNAoxMDIsSmFuZSxTbWl0aCxqYW5lLnNtaXRoQGV4YW1wbGUuY29tLDU1NS0wNTY3OA=="
+  },
+  {
+    "fileName": "merged_transactions.csv",
+    "mimeType": "text/csv", 
+    "blob": "dHJhbnNhY3Rpb25faWQsYWNjb3VudF9pZCxhbW91bnQsZGVzY3JpcHRpb24sdHJhbnNhY3Rpb25fZGF0ZQpUWDAwMSwxMjM0LC0xMDAuMDAsUHVyY2hhc2UsMjAyNC0wMS0xNVQxMDowMDowMFoKVFgwMDIsMTIzNSwyNTAwLjAwLERlcG9zaXQsMjAyNC0wMS0xNVQxMTowMDowMFo="
+  },
+  {
+    "fileName": "merged_addresses.csv",
+    "mimeType": "text/csv",
+    "blob": "YWRkcmVzc19pZCxjdXN0b21lcl9pZCxzdHJlZXQsY2l0eSxwcm92aW5jZSxwb3N0YWxfY29kZQpBRDAwMSwxMDEsMTIzIE1haW4gU3QsVG9yb250byxPTixNNUggMkE0CkFEMDAyLDEwMiw0NTYgT2FrIFN0LE1vbnRyZWFsLFFDLUg0QSAyQjVj"
+  }
+]

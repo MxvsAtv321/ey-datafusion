@@ -135,14 +135,14 @@ export default function ExportPage() {
           Check Schema Drift
         </Button>
         <Button
-          onClick={() => manifest && handleDownload(manifest.json || "", "manifest.json")}
+          onClick={() => manifest && handleDownload(manifest.json || "", "merged-files.csv")}
           disabled={!manifest}
           variant="outline"
           size="lg"
           className="h-auto py-6"
         >
           <FileDown className="mr-2 h-5 w-5" />
-          Download JSON
+          Download CSV
         </Button>
       </div>
 
@@ -259,7 +259,7 @@ export default function ExportPage() {
                   ) : (
                     <>
                       <Copy className="mr-2 h-4 w-4" />
-                      Copy JSON
+                      Copy Manifest
                     </>
                   )}
                 </Button>
