@@ -17,6 +17,9 @@ const DEBOUNCE_MS = 250;
 export const SuggestMappingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { files, setCandidates } = useStore();
+  const bank1Files = useStore(s => s.bank1Files);
+  const bank2Files = useStore(s => s.bank2Files);
+  const setFiles = useStore(s => s.setFiles);
   const [threshold, setThreshold] = useState(0.70);
   const [decisions, setDecisions] = useState<Map<string, MappingDecision>>(new Map());
   const [stats, setStats] = useState<{ auto_pct:number; estimated_minutes_saved:number } | undefined>(undefined);
@@ -25,6 +28,14 @@ export const SuggestMappingsPage: React.FC = () => {
 
   // Candidates from server are stored in global store after api.match
   const candidatesFromStore = useStore(s => s.candidates);
+  // Ensure we have a 2-file pair in store when entering the page
+  useEffect(() => {
+    if ((!files || files.length < 2) && bank1Files && bank2Files && bank1Files.length > 0 && bank2Files.length > 0) {
+      setFiles([bank1Files[0], bank2Files[0]]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bank1Files?.length, bank2Files?.length]);
+
 
   useEffect(() => {
     if (candidatesFromStore && candidatesFromStore.length > 0) {
