@@ -46,6 +46,14 @@ export const SuggestMappingsPage: React.FC = () => {
     estMinutesSaved: stats ? stats.estimated_minutes_saved : 0,
   }), [threshold, stats]);
 
+  // Initial fetch on mount or when files pair becomes available
+  useEffect(() => {
+    if (!candidatesFromStore || candidatesFromStore.length === 0) {
+      fetchMatches(threshold);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files?.length]);
+
   const fetchMatches = async (t: number) => {
     if (!files || files.length === 0) return;
     setLoading(true);
@@ -107,7 +115,7 @@ export const SuggestMappingsPage: React.FC = () => {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">No Mapping Suggestions</h1>
           <p className="text-gray-600 mb-4">No mapping candidates were found for this run.</p>
-          <Button onClick={() => navigate('/upload')}>
+          <Button onClick={() => navigate('/') }>
             Start a new run
           </Button>
         </div>
