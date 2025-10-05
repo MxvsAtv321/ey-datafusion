@@ -136,6 +136,8 @@ export const SuggestMappingsPage: React.FC = () => {
       return;
     }
     toast.success(`Continuing with ${approvedCount} approved mappings`);
+    // Proceed to transform/validate step
+    navigate('/merge-validate');
   };
 
   const approvedCount = Array.from(decisions.values()).filter(d => d === 'approved').length;
