@@ -7,6 +7,8 @@ from ..services.ingest import load_table, normalize_headers
 from ..services.profile import profile_table
 from ..schemas.profile import ProfileResponse
 from ..services.match import suggest_mappings
+from ..services.table_pairing import pair_tables
+from ..schemas.pairing import PairRequest, PairResponse, PairingSettings, PairingMatrix, PairSuggestion
 from ..schemas.match import MatchResponse, CandidateMapping
 from fastapi import HTTPException
 from ..services.merge import merge_datasets, er_lite_customers
@@ -100,6 +102,22 @@ async def match(request: Request, files: List[UploadFile] = File(...), threshold
             "estimated_minutes_saved": float(est_minutes_saved),
         },
     )
+
+
+@router.post("/pair", response_model=PairResponse, dependencies=[Depends(require_api_key)])
+async def pair(payload: PairRequest):
+    min_score = payload.min_score if payload.min_score is not None else settings.tablepair_min_score
+    pairs, ul, ur, matrix = pair_tables(payload.left.tables, payload.right.tables, min_score=min_score)
+    prs = [PairSuggestion(**p) for p in pairs]
+    cfg = PairingSettings(weights={
+        "name": settings.tablepair_w_name,
+        "tags": settings.tablepair_w_tags,
+        "dtype": settings.tablepair_w_dtype,
+        "rows": settings.tablepair_w_rows,
+        "keys": settings.tablepair_w_keys,
+        "entity": settings.tablepair_w_entity,
+    }, min_score=min_score)
+    return PairResponse(settings=cfg, pairs=prs, unpaired_left=ul, unpaired_right=ur, matrix=PairingMatrix(**matrix))
 
 
 @router.post("/merge", dependencies=[Depends(require_api_key)])

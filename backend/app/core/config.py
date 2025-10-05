@@ -48,6 +48,20 @@ class Settings:
     outlier_iqr_k: float = float(os.getenv("OUTLIER_IQR_K", "1.5"))
     outlier_z: float = float(os.getenv("OUTLIER_Z", "3.0"))
 
+    # Table pairing weights and thresholds
+    tablepair_w_name: float = float(os.getenv("TABLEPAIR_W_NAME", "0.35"))
+    tablepair_w_tags: float = float(os.getenv("TABLEPAIR_W_TAGS", "0.25"))
+    tablepair_w_dtype: float = float(os.getenv("TABLEPAIR_W_DTYPE", "0.20"))
+    tablepair_w_rows: float = float(os.getenv("TABLEPAIR_W_ROWS", "0.10"))
+    tablepair_w_keys: float = float(os.getenv("TABLEPAIR_W_KEYS", "0.10"))
+    tablepair_w_entity: float = float(os.getenv("TABLEPAIR_W_ENTITY", "0.10"))
+    tablepair_min_score: float = float(os.getenv("TABLEPAIR_MIN_SCORE", "0.35"))
+    tablepair_auto_threshold_pct: float = float(os.getenv("TABLEPAIR_AUTO_THRESHOLD_PCT", "0.75"))
+
+    # Semantic family gate for columns
+    family_gate_enabled: bool = os.getenv("FAMILY_GATE_ENABLED", "true").lower() in {"1","true","yes"}
+    family_gate_cap: float = float(os.getenv("FAMILY_GATE_CAP", "0.49"))
+
 
 settings = Settings()
 

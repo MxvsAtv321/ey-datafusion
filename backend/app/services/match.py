@@ -27,6 +27,42 @@ def _types_compatible(a: pd.Series, b: pd.Series) -> bool:
     sa, sb = _dtype_simple(a), _dtype_simple(b)
     # Strict equality only; differing families are considered mismatched
     return sa == sb
+def _infer_family(name: str, tags: List[str]) -> str:
+    n = name.lower()
+    tagset = {t.lower() for t in (tags or [])}
+    def has(*k: str) -> bool:
+        return any(t in tagset or k_ in n for k_ in k for t in tagset)
+    if any(k in tagset for k in ["email_like"] ) or "email" in n:
+        return "email"
+    if any(k in tagset for k in ["phone_like"]) or "phone" in n or "mobile" in n:
+        return "phone"
+    if "iban_like" in tagset or "iban" in n:
+        return "id"
+    if any(x in n for x in ["amount","balance","currency"]):
+        return "amount"
+    if any(x in n for x in ["date","dob","posted_date","open_date"]):
+        return "date"
+    if any(x in n for x in ["addr","address","city","postcode","zip","country","region"]):
+        return "address"
+    if any(x in n for x in ["code","status_code"]):
+        return "code"
+    if any(x in n for x in ["name","fname","lname","first_name","last_name"]):
+        return "name"
+    if any(x in n for x in ["id","uuid","guid","accountid","customerid"]):
+        return "id"
+    return "other"
+
+_FAMILY_COMPAT: Dict[str, set[str]] = {
+    "id": {"id","code"},
+    "name": {"name"},
+    "date": {"date"},
+    "amount": {"amount"},
+    "address": {"address"},
+    "phone": {"phone"},
+    "email": {"email"},
+    "code": {"code","id"},
+    "other": {"other","id","code"},
+}
 
 
 def _name_score(a: str, b: str) -> float:
@@ -153,6 +189,17 @@ def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: in
             # normalize if weights do not sum ~1
             w_n, w_t, w_o, w_e = (w_n/total, w_t/total, w_o/total, w_e/total)
             conf = w_n * name + w_t * type_compat + w_o * overlap + w_e * emb
+
+            # semantic family gate
+            if settings.family_gate_enabled:
+                # try to infer using simple heuristics over column names
+                lf = _infer_family(lc, [])
+                rf = _infer_family(rc, [])
+                if rf not in _FAMILY_COMPAT.get(lf, {lf}):
+                    conf = min(conf, settings.family_gate_cap)
+                    cap_warn = True
+                else:
+                    cap_warn = False
             thr = threshold if threshold is not None else settings.match_auto_threshold
             decision = "auto" if conf >= thr else "review"
             reasons, warnings = _reasons_and_warnings({
@@ -161,6 +208,8 @@ def suggest_mappings(left_df: pd.DataFrame, right_df: pd.DataFrame, sample_n: in
                 "value_overlap": overlap,
                 "embedding": emb,
             }, settings.embeddings_enabled)
+            if settings.family_gate_enabled and 'cap_warn' in locals() and cap_warn:
+                warnings.append("Cross-family pair")
 
             out.append(
                 {
