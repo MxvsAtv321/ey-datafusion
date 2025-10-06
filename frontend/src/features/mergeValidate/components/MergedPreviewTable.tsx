@@ -1,118 +1,270 @@
-import React, { useMemo, useState } from 'react';
-import { MergePreview } from '@/types/merge';
-import { LineageBadge } from './LineageBadge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import React, { useState } from 'react';
+import { MergedRow, Lineage } from '@/types/merge';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Input } from '@/components/ui/input';
+import { AlertCircle, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface MergedPreviewTableProps {
-  preview: MergePreview | null;
+  columns: string[];
+  rows: MergedRow[];
+  loading?: boolean;
+  error?: string | null;
+  secureMode?: boolean;
+  filter?: {
+    issuesOnly?: boolean;
+    query?: string;
+  };
+  issueRowIndices?: Set<number>;
   className?: string;
+  onRetry?: () => void;
 }
 
-export const MergedPreviewTable: React.FC<MergedPreviewTableProps> = ({
-  preview,
-  className,
+const LineageTooltip: React.FC<{ lineage: Lineage[]; secureMode: boolean }> = ({
+  lineage,
+  secureMode,
 }) => {
-  const [rowLimit, setRowLimit] = useState<number>(10);
+  return (
+    <div className="space-y-2 text-xs">
+      <p className="font-semibold">Data Lineage:</p>
+      {lineage.map((lin, idx) => (
+        <div key={idx} className="space-y-0.5 border-l-2 border-primary/50 pl-2">
+          <p>
+            <span className="font-medium">Source:</span>{' '}
+            {secureMode ? '••••••' : lin.dataset}
+          </p>
+          <p>
+            <span className="font-medium">Column:</span>{' '}
+            {secureMode ? '••••••' : lin.column}
+          </p>
+          <p>
+            <span className="font-medium">Row:</span> {lin.rowIndex}
+          </p>
+          {lin.transformsApplied && lin.transformsApplied.length > 0 && (
+            <p>
+              <span className="font-medium">Transforms:</span>{' '}
+              {lin.transformsApplied.join(', ')}
+            </p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+};
 
-  const filteredRows = useMemo(() => {
-    if (!preview) return [];
-    return preview.rows.slice(0, rowLimit);
-  }, [preview, rowLimit]);
+const SkeletonRow: React.FC<{ columns: number }> = ({ columns }) => (
+  <TableRow data-testid="skeleton-row" className="animate-pulse">
+    {Array.from({ length: columns }).map((_, idx) => (
+      <TableCell key={idx}>
+        <div className="h-4 bg-muted rounded w-full" />
+      </TableCell>
+    ))}
+  </TableRow>
+);
 
-  if (!preview) {
+export const MergedPreviewTable: React.FC<MergedPreviewTableProps> = ({
+  columns,
+  rows,
+  loading = false,
+  error = null,
+  secureMode = false,
+  filter,
+  issueRowIndices = new Set(),
+  className,
+  onRetry,
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Apply filters
+  const filteredRows = React.useMemo(() => {
+    let filtered = rows;
+
+    // Filter by issues
+    if (filter?.issuesOnly) {
+      filtered = filtered.filter((_, idx) => issueRowIndices.has(idx));
+    }
+
+    // Filter by search query
+    const query = (filter?.query || searchQuery).toLowerCase();
+    if (query) {
+      filtered = filtered.filter((row) => {
+        return columns.some((col) => {
+          const value = row[col]?.value;
+          return value && String(value).toLowerCase().includes(query);
+        });
+      });
+    }
+
+    return filtered;
+  }, [rows, columns, filter, searchQuery, issueRowIndices]);
+
+  const truncateValue = (value: string | number | boolean | null): string => {
+    if (value === null || value === undefined) return '—';
+    const str = String(value);
+    if (str.length > 50) {
+      return str.substring(0, 47) + '...';
+    }
+    return str;
+  };
+
+  if (error) {
     return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle>Merged Preview</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No preview data available.</p>
-        </CardContent>
-      </Card>
+      <div className={cn('rounded-lg border border-destructive/50 bg-destructive/5 p-8', className)}>
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <AlertCircle className="h-12 w-12 text-destructive" />
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-destructive">Error Loading Preview</h3>
+            <p className="text-sm text-muted-foreground mt-2">{error}</p>
+          </div>
+          {onRetry && (
+            <button
+              onClick={onRetry}
+              className="text-sm text-primary hover:underline"
+            >
+              Try again
+            </button>
+          )}
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">Merged Preview</CardTitle>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="row-limit" className="text-sm font-medium">
-                Show rows:
-              </Label>
-              <Select
-                value={rowLimit.toString()}
-                onValueChange={(value) => setRowLimit(parseInt(value))}
-              >
-                <SelectTrigger id="row-limit" className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Badge variant="outline">
-              {filteredRows.length} of {preview.rows.length} rows
-            </Badge>
+    <div className={cn('space-y-4', className)}>
+      {/* Search bar */}
+      {!loading && (
+        <div className="flex items-center space-x-2">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search across all columns..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
           </div>
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredRows.length} of {rows.length} rows
+          </p>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table data-testid="merge-preview-table" className="w-full">
-            <TableHeader>
+      )}
+
+      {/* Table */}
+      <div className="rounded-lg border bg-white dark:bg-gray-950 shadow-sm">
+        <div className="max-h-[600px] overflow-auto" data-testid="merge-preview-table">
+          <Table>
+            <TableHeader className="sticky top-0 bg-gray-50 dark:bg-gray-900 z-10">
               <TableRow>
-                {preview.columns.map(column => (
-                  <TableHead key={column} className="min-w-[150px] text-sm font-semibold">
-                    {column}
+                {columns.map((col) => (
+                  <TableHead key={col} className="font-semibold whitespace-nowrap">
+                    {col}
                   </TableHead>
                 ))}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredRows.map((row, rowIndex) => (
-                <TableRow key={rowIndex}>
-                  {preview.columns.map(column => {
-                    const cell = row[column];
-                    if (!cell) {
-                      return (
-                        <TableCell key={column} data-testid={`cell-r${rowIndex}-c${column}`}>
-                          <span className="text-muted-foreground">—</span>
-                        </TableCell>
-                      );
-                    }
-
-                    return (
-                      <TableCell key={column} data-testid={`cell-r${rowIndex}-c${column}`} className="py-3">
-                        <div className="flex items-center space-x-3">
-                          <span className="truncate max-w-[300px] text-sm">
-                            {cell.value === null ? (
-                              <span className="text-muted-foreground">null</span>
-                            ) : (
-                              String(cell.value)
-                            )}
-                          </span>
-                          <LineageBadge lineage={cell.lineage} />
-                        </div>
-                      </TableCell>
-                    );
-                  })}
+              {loading ? (
+                // Skeleton rows
+                Array.from({ length: 8 }).map((_, idx) => (
+                  <SkeletonRow key={idx} columns={columns.length} />
+                ))
+              ) : filteredRows.length === 0 ? (
+                // Empty state
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-32 text-center">
+                    <div className="flex flex-col items-center justify-center space-y-2">
+                      <AlertCircle className="h-8 w-8 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        No rows match your filters
+                      </p>
+                    </div>
+                  </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                // Data rows
+                filteredRows.map((row, rowIdx) => {
+                  const originalRowIdx = rows.indexOf(row);
+                  const hasIssue = issueRowIndices.has(originalRowIdx);
+
+                  return (
+                    <TableRow
+                      key={rowIdx}
+                      className={cn(
+                        hasIssue && 'bg-amber-50/50 dark:bg-amber-950/20 hover:bg-amber-100/50'
+                      )}
+                    >
+                      {columns.map((col, colIdx) => {
+                        const cell = row[col];
+                        const value = cell?.value;
+                        const lineage = cell?.lineage;
+
+                        return (
+                          <TableCell
+                            key={col}
+                            data-testid={`cell-r${rowIdx}-c${colIdx}`}
+                            className="relative"
+                            title={String(value ?? '')}
+                          >
+                            <div className="flex items-center space-x-2">
+                              <span className="flex-1">
+                                {truncateValue(value)}
+                              </span>
+                              {lineage && lineage.length > 0 && (
+                                <TooltipProvider>
+                                  <Tooltip delayDuration={100}>
+                                    <TooltipTrigger asChild>
+                                      <button
+                                        className="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
+                                        data-testid={`lineage-dot-r${rowIdx}-c${colIdx}`}
+                                        aria-label={`View lineage for ${col}`}
+                                      >
+                                        <div
+                                          className={cn(
+                                            'h-2 w-2 rounded-full',
+                                            lineage[0].dataset === 'bankA'
+                                              ? 'bg-blue-500'
+                                              : 'bg-purple-500'
+                                          )}
+                                        />
+                                      </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="top"
+                                      className="max-w-xs"
+                                    >
+                                      <LineageTooltip
+                                        lineage={lineage}
+                                        secureMode={secureMode}
+                                      />
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
+                          </TableCell>
+                        );
+                      })}
+                    </TableRow>
+                  );
+                })
+              )}
             </TableBody>
           </Table>
         </div>
-        
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };

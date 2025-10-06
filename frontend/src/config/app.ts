@@ -1,2 +1,4 @@
 export const SAMPLE_ROW_CAP = 200;
-
+export const AGENT_REVIEW_DELAY_MS = 5000;
+export const MERGE_PAGE_SKELETON_DELAY_MS = 700;
+export const EXPORT_PAGE_SKELETON_DELAY_MS = 1000;

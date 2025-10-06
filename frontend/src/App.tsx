@@ -8,11 +8,11 @@ import { StepperNav } from "@/components/StepperNav";
 import ProfilePage from "./pages/ProfilePage";
 import MappingPage from "./pages/MappingPage";
 import MergePage from "./pages/MergePage";
-import ExportPage from "./pages/ExportPage";
 import NotFound from "./pages/NotFound";
 import { UploadProfilePage } from "./features/uploadProfile";
 import { SuggestMappingsPage } from "./features/mappings";
 import { MergeValidatePage } from "./features/mergeValidate";
+import { ExportPage } from "./features/export";
 import PairingPage from "./features/pairing/PairingPage";
 
 const queryClient = new QueryClient();
